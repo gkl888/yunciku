@@ -1,0 +1,20 @@
+# 临时文件和脚本
+*.py
+*.js
+*.ps1
+*.md
+_tmp.txt
+*.txt
+!keyword_database.json
+!purchase_history.json
+
+# 图片（不需要上传）
+photos/
+*.png
+*.jpg
+*.jpeg
+
+# 其他临时文件
+batch*.json
+photo_*.json
+urls.json

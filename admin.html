@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>采购词库后台管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            padding-top: 56px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* 强制重置所有可能导致偏移的样式 */
+        #keywordsTab,
+        #categoriesContainer {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        #categoriesContainer {
+            position: relative;
+            left: 0;
+            transform: none;
+        }
+
+        /* 标题 */
+        h1 { font-size: 24px; font-weight: 600; color: #1a1a2e; margin-bottom: 20px; }
+
+        /* Tab */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab {
+            padding: 8px 18px; border: none; background: #eef0f5; color: #666;
+            border-radius: 6px; cursor: pointer; font-size: 14px; transition: all .2s;
+        }
+        .tab.active { background: linear-gradient(135deg, #4a90d9, #357abd); color: #fff; }
+
+        /* 统计卡片 */
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .stat-card {
+            background: #fff; border-radius: 10px; padding: 20px; text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        }
+        .stat-value { font-size: 32px; font-weight: 700; color: #4a90d9; }
+        .stat-label { font-size: 13px; color: #999; margin-top: 4px; }
+
+        /* 工具栏 */
+        .toolbar {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+            background: #fff; padding: 12px 16px; border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 20px;
+        }
+        .toolbar input[type="text"] {
+            flex: 1; min-width: 180px; padding: 8px 14px; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 14px; outline: none;
+        }
+        .toolbar input:focus { border-color: #4a90d9; }
+        .toolbar select {
+            padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 14px; outline: none; background: #fff;
+        }
+        .toolbar label { font-size: 13px; color: #666; display: flex; align-items: center; gap: 4px; }
+        .toolbar label input { width: auto; }
+
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 13px; transition: all .2s; white-space: nowrap;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, #4a90d9, #357abd); color: #fff; }
+        .btn-success { background: linear-gradient(135deg, #52c41a, #389e0d); color: #fff; }
+        .btn-warning { background: linear-gradient(135deg, #faad14, #d48806); color: #fff; }
+        .btn-info { background: linear-gradient(135deg, #1890ff, #096dd9); color: #fff; }
+
+        /* 分类区块 */
+        .category-section { margin-bottom: 24px; }
+        .cat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; padding: 14px 20px; border-radius: 10px 10px 0 0;
+            font-size: 17px; font-weight: 600;
+        }
+        .cat-header small { font-size: 13px; opacity: .85; font-weight: 400; margin-left: 8px; }
+
+        /* 关键词网格 */
+        .keywords-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 12px; background: #fff; padding: 16px; border-radius: 0 0 10px 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+        .keyword-card {
+            background: #fafbfc; border: 1px solid #eee; border-radius: 8px;
+            padding: 14px; transition: all .2s;
+        }
+        .keyword-card:hover { border-color: #4a90d9; box-shadow: 0 2px 8px rgba(74,144,217,.15); }
+        .kw-top { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; }
+        .kw-name { font-size: 16px; font-weight: 600; color: #1a1a2e; }
+        .kw-name-en { font-size: 12px; color: #999; margin-top: 2px; }
+        .kw-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .tag {
+            padding: 3px 10px; border-radius: 12px; font-size: 11px; background: #eef0f5; color: #666;
+        }
+        .heat-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; color: #fff; }
+        .heat-5 { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+        .heat-4 { background: linear-gradient(135deg, #fa8c16, #d46b08); }
+        .heat-3 { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .heat-2 { background: linear-gradient(135deg, #52c41a, #389e0d); }
+        .heat-1 { background: #ccc; color: #666; }
+        .kw-actions { display: flex; gap: 6px; }
+        .kw-actions .btn { padding: 4px 10px; font-size: 11px; }
+
+        /* 用户管理样式 */
+        .user-table, .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        }
+        .user-table th, .user-table td, .log-table th, .log-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .user-table th, .log-table th {
+            background: #f5f7fa;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+        .user-table td, .log-table td {
+            font-size: 13px;
+            color: #666;
+        }
+        .user-table tr:hover, .log-table tr:hover {
+            background: #f9fafb;
+        }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending { background: #fff7e6; color: #d46b08; }
+        .status-approved { background: #f6ffed; color: #52c41a; }
+        .status-rejected { background: #fff1f0; color: #ff4d4f; }
+        .status-admin { background: #e6f7ff; color: #1890ff; }
+        .log-table td:nth-child(3) { font-family: monospace; font-size: 12px; }
+        .log-type-login { color: #52c41a; }
+        .log-type-logout { color: #faad14; }
+        .log-type-register { color: #1890ff; }
+        .log-type-approve { color: #722ed1; }
+        .log-type-reject { color: #ff4d4f; }
+        .log-type-password { color: #13c2c2; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #fff; border-radius: 14px; padding: 28px; width: 92%;
+            max-width: 640px; max-height: 88vh; overflow-y: auto;
+        }
+        .modal-title { font-size: 19px; font-weight: 600; color: #333; margin-bottom: 20px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 4px; font-size: 13px; color: #666; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 14px; outline: none; background: #fafbfc;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #4a90d9; }
+        .form-group textarea { min-height: 70px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+
+        /* Tips */
+        .tips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+        .tip-card {
+            background: #fff; border-radius: 8px; padding: 14px;
+            border: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+        }
+        .tip-text { font-size: 14px; line-height: 1.6; color: #444; margin-bottom: 8px; }
+        .tip-type-tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; background: #e6f7ff; color: #1890ff; }
+        .tip-actions { display: flex; gap: 6px; margin-top: 8px; }
+        .tip-actions .btn { padding: 4px 10px; font-size: 11px; }
+
+        /* Checkbox for batch */
+        .kw-check { margin-right: 8px; cursor: pointer; width: 16px; height: 16px; accent-color: #4a90d9; }
+        .kw-checked { border-left: 3px solid #4a90d9 !important; background: #f0f6ff; }
+    
+        /* 采购记录管理样式 */
+        .purchase-tab-content { padding: 20px; }
+        .purchase-add-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .purchase-field { display: flex; flex-direction: column; gap: 4px; }
+        .purchase-field label { font-size: 12px; color: #666; font-weight: 600; }
+        .purchase-field input, .purchase-field select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .purchase-field input:focus { border-color: #11998e; }
+        .purchase-field select { min-width: 150px; }
+        .purchase-add-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg,#11998e,#38ef7d);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .purchase-add-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .purchase-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .purchase-table th {
+            background: #f8fafc;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 13px;
+            color: #666;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .purchase-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .purchase-table tr:hover td { background: #f0fdf4; }
+        .purchase-del-btn {
+            background: #fee2e2;
+            color: #ef4444;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .purchase-del-btn:hover { background: #fca5a5; }
+        .purchase-date-cell { color: #666; font-size: 13px; }
+        .purchase-empty-admin {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .purchase-count-badge {
+            background: #10b981;
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>采购词库后台管理</h1>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('keywords',this)">关键词管理</button>
+        <button class="tab" onclick="showTab('tips',this)">业务心法</button>
+        <button class="tab" onclick="showTab('purchase',this)">📦 采购记录 <span class="purchase-count-badge" id="purchaseBadge">0</span></button>
+        <button class="tab" onclick="showTab('users',this)">👥 用户管理 <span class="purchase-count-badge" id="userBadge" style="background:#722ed1;">0</span></button>
+        <button class="tab" onclick="showTab('logs',this)">📋 操作日志</button>
+    </div>
+
+    <!-- 关键词管理 -->
+    <div id="keywordsTab">
+        <div class="stats">
+            <div class="stat-card"><div class="stat-value" id="catCount">0</div><div class="stat-label">大类</div></div>
+            <div class="stat-card"><div class="stat-value" id="subCount">0</div><div class="stat-label">子类</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalCount">0</div><div class="stat-label">关键词</div></div>
+        </div>
+
+        <div class="toolbar">
+            <input type="text" id="searchInput" placeholder="搜索关键词..." oninput="renderAll()">
+            <select id="filterCat" onchange="renderAll()"><option value="">所有大类</option></select>
+            <select id="filterSub" onchange="renderAll()"><option value="">所有子类</option></select>
+            <label><input type="checkbox" id="checkAll" onchange="toggleSelectAll()"> 全选</label>
+            <button class="btn btn-warning" onclick="showBatchHeatModal()">🔥 批量改热度</button>
+            <button class="btn btn-success" onclick="showAddModal()">新增关键词</button>
+            <button class="btn btn-info" onclick="exportJSON()">📤 导出JSON</button>
+        </div>
+
+        <div id="categoriesContainer"></div>
+    </div>
+
+    <!-- 业务心法 -->
+    <div id="tipsTab" style="display:none;">
+        <div class="toolbar" style="margin-bottom:16px;">
+            <button class="btn btn-primary" onclick="showAddTipModal()">新增心法</button>
+        </div>
+        <div class="tips-grid" id="tipsGrid"></div>
+    </div>
+
+    <!-- 采购记录管理 -->
+    <div id="purchaseTab" style="display:none;">
+        <div class="purchase-tab-content">
+            <h3 style="margin-bottom:15px;color:#11998e;">📦 近一年采购记录管理</h3>
+            
+            <div class="purchase-add-row">
+                <div class="purchase-field">
+                    <label>关键词名称</label>
+                    <input type="text" id="adminPurchaseKw" placeholder="输入关键词（可从词库匹配）" style="width:200px;" oninput="autoMatchKeyword(this.value)">
+                </div>
+                <div class="purchase-field" id="matchResult" style="display:none;">
+                    <label>匹配结果</label>
+                    <select id="adminPurchaseSelect" style="width:250px;">
+                        <option value="">-- 选择匹配的关键词 --</option>
+                    </select>
+                </div>
+                <div class="purchase-field">
+                    <label>采购日期</label>
+                    <input type="date" id="adminPurchaseDate" style="width:160px;">
+                </div>
+                <button class="purchase-add-btn" onclick="adminAddPurchase()">添加</button>
+            </div>
+
+            <table class="purchase-table">
+                <thead>
+                    <tr>
+                        <th>关键词</th>
+                        <th>所属分类</th>
+                        <th>采购日期</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="purchaseTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 用户管理 -->
+    <div id="usersTab" style="display:none;">
+        <div style="background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+            <h3 style="margin-bottom:15px;color:#333;">👥 用户管理</h3>
+            <p style="font-size:13px;color:#666;margin-bottom:15px;">管理所有注册用户，审核新用户注册申请</p>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>姓名</th>
+                        <th>用户名</th>
+                        <th>状态</th>
+                        <th>注册时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 操作日志 -->
+    <div id="logsTab" style="display:none;">
+        <div style="background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+            <h3 style="margin-bottom:15px;color:#333;">📋 操作日志</h3>
+            <p style="font-size:13px;color:#666;margin-bottom:15px;">查看所有用户的登录、注册、审核等操作记录</p>
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>操作类型</th>
+                        <th>用户名</th>
+                        <th>IP地址</th>
+                        <th>详情</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 顶部工具栏 -->
+<div class="admin-toolbar" style="position:fixed;top:0;left:0;right:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,0.1);z-index:999;">
+    <div style="font-size:14px;color:#666;">
+        <span style="font-weight:600;color:#333;">采购词库管理后台</span>
+        <span style="margin-left:16px;color:#999;">|</span>
+        <span style="margin-left:16px;" id="adminUserInfo">加载中...</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+        <button onclick="goToIndex()" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">🏠 返回首页</button>
+        <button onclick="adminLogout()" style="padding:8px 16px;border:none;border-radius:6px;background:#ef4444;color:#fff;cursor:pointer;font-size:13px;">退出登录</button>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal" id="keywordModal">
+    <div class="modal-content">
+        <h2 class="modal-title" id="modalTitle">新增关键词</h2>
+        <div class="form-row">
+            <div class="form-group"><label>商品词（中文）</label><input type="text" id="kwZh" placeholder="如：保鲜盒"></div>
+            <div class="form-group"><label>商品词（英文）</label><input type="text" id="kwEn" placeholder="如：food container"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>品类</label><select id="kwCategory"></select></div>
+            <div class="form-group"><label>子类</label><select id="kwSubcategory"></select></div>
+        </div>
+        <div class="form-group"><label>变体词（中文，逗号分隔）</label><input type="text" id="kwVariantZh" placeholder="保鲜密封收纳盒"></div>
+        <div class="form-group"><label>变体词（英文，逗号分隔）</label><input type="text" id="kwVariantEn" placeholder="container,storage box"></div>
+        <div class="form-group"><label>属性词（中文，逗号分隔）</label><input type="text" id="kwAttrZh" placeholder="密封,便携,塑料"></div>
+        <div class="form-group"><label>属性词（英文，逗号分隔）</label><input type="text" id="kwAttrEn" placeholder="sealed,portable,plastic"></div>
+        <div class="form-group"><label>场景词（中文，逗号分隔）</label><input type="text" id="kwSceneZh" placeholder="厨房,冰箱,户外"></div>
+        <div class="form-group"><label>场景词（英文，逗号分隔）</label><input type="text" id="kwSceneEn" placeholder="kitchen,fridge,outdoor"></div>
+        <div class="form-row">
+            <div class="form-group"><label>热度</label><select id="kwHeat">
+                <option value="1">📉 一般热度</option>
+                <option value="2">📊 中热度</option>
+                <option value="4">⚡ 高热度</option>
+                <option value="5">🔥 超高热度</option>
+            </select></div>
+            <div class="form-group"><label>备注</label><input type="text" id="kwNotes" placeholder="备注信息..."></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn" style="background:#ddd;color:#333;" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveKeyword()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Heat Modal -->
+<div class="modal" id="batchHeatModal">
+    <div class="modal-content">
+        <h2 class="modal-title">批量修改热度</h2>
+        <p style="font-size:13px;color:#888;margin-bottom:16px;">已选中 <span id="batchCount">0</span> 个关键词</p>
+        <div class="form-group"><label>选择热度</label><select id="batchHeatValue">
+            <option value="1">📉 一般热度</option>
+            <option value="2">📊 中热度</option>
+            <option value="4">⚡ 高热度</option>
+            <option value="5">🔥 超高热度</option>
+        </select></div>
+        <div class="modal-actions">
+            <button class="btn" style="background:#ddd;color:#333;" onclick="closeBatchModal()">取消</button>
+            <button class="btn btn-warning" onclick="applyBatchHeat()">应用</button>
+        </div>
+    </div>
+</div>
+
+<!-- Tip Modal -->
+<div class="modal" id="tipModal">
+    <div class="modal-content">
+        <h2 class="modal-title">新增业务心法</h2>
+        <div class="form-group"><label>心法内容</label><textarea id="tipContent" placeholder="输入心法内容..."></textarea></div>
+        <div class="form-group"><label>类型</label><select id="tipType">
+            <option value="采购谈判">采购谈判</option>
+            <option value="业务情绪调整">业务情绪调整</option>
+        </select></div>
+        <div class="modal-actions">
+            <button class="btn" style="background:#ddd;color:#333;" onclick="closeTipModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveTip()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let keywordData = { categories: [] };
+let tips = [];
+let editingId = null;
+let selectedIds = new Set();
+
+const defaultTips = [
+    {id:1,text:"询价时不要只问一家，至少对比三家供应商",type:"采购谈判"},
+    {id:2,text:"首次合作先小批量试单，确认质量再大批量",type:"采购谈判"},
+    {id:3,text:"价格不是唯一标准，质量和交期同样重要",type:"采购谈判"},
+    {id:4,text:"遇到问题先冷静，情绪化解决不了任何事",type:"业务情绪调整"},
+    {id:5,text:"供应商也是合作伙伴，建立长期信任关系",type:"采购谈判"}
+];
+
+const heatLabels = {'':'','1':'📉 一般热度','2':'📊 中热度','4':'⚡ 高热度','5':'🔥 超高热度'};
+const popMap = {'1':10, '2':30, '4':70, '5':90};
+
+// 确保DOM完全加载后才执行
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+});
+
+async function loadData() {
+    try {
+        const resp = await fetch('keyword_database.json');
+        keywordData = await resp.json();
+    } catch(e) {
+        console.error('加载数据失败:', e);
+        alert('加载数据失败，请确保已启动本地服务器');
+        return;
+    }
+    
+    const savedTips = localStorage.getItem('businessTips');
+    tips = savedTips ? JSON.parse(savedTips) : [...defaultTips];
+    
+    renderFilterCats();
+    renderAll();
+    renderTips();
+}
+
+function renderStats() {
+    let total=0, subs=0;
+    keywordData.categories.forEach(c => { c.subcategories.forEach(s => { subs++; total+=s.keywords.length; }); });
+    document.getElementById('catCount').textContent = keywordData.categories.length;
+    document.getElementById('subCount').textContent = subs;
+    document.getElementById('totalCount').textContent = total;
+}
+
+function renderFilterCats() {
+    const sel = document.getElementById('filterCat');
+    sel.innerHTML = '<option value="">所有大类</option>' + 
+        keywordData.categories.map(c => `<option value="${c.id}">${c.name.zh}</option>`).join('');
+    sel.onchange = () => {
+        const catId = sel.value;
+        const subSel = document.getElementById('filterSub');
+        if (!catId) { subSel.innerHTML = '<option value="">所有子类</option>'; return; }
+        const cat = keywordData.categories.find(c => c.id === catId);
+        subSel.innerHTML = '<option value="">所有子类</option>' + 
+            (cat ? cat.subcategories.map(s => `<option value="${s.id}">${s.name.zh}</option>`).join('') : '');
+    };
+
+    // Also populate modal category select
+    const kwCatSel = document.getElementById('kwCategory');
+    kwCatSel.innerHTML = keywordData.categories.map(c => `<option value="${c.id}">${c.name.zh}</option>`).join('');
+    kwCatSel.onchange = () => renderKwSubcats(kwCatSel.value);
+    renderKwSubcats(keywordData.categories[0]?.id);
+}
+
+function renderKwSubcats(catId) {
+    const cat = keywordData.categories.find(c => c.id === catId);
+    document.getElementById('kwSubcategory').innerHTML = cat
+        ? cat.subcategories.map(s => `<option value="${s.id}">${s.name.zh}</option>`).join('')
+        : '';
+}
+
+function getHeat(v) {
+    if (v >= 90) return 5;
+    if (v >= 70) return 4;
+    if (v >= 30) return 2;
+    return 1;
+}
+
+function renderAll() {
+    const query = (document.getElementById('searchInput').value || '').toLowerCase();
+    const fCat = document.getElementById('filterCat').value;
+    const fSub = document.getElementById('filterSub').value;
+
+    renderStats();
+    const container = document.getElementById('categoriesContainer');
+    if (!container) {
+        console.error('categoriesContainer not found');
+        return;
+    }
+    let html = '';
+
+    keywordData.categories.forEach(cat => {
+        if (fCat && cat.id !== fCat) return;
+        
+        let catHtml = '';
+        cat.subcategories.forEach(sub => {
+            if (fSub && sub.id !== fSub) return;
+            
+            const kws = sub.keywords.filter(kw => {
+                const s = (kw.product_word.zh + ' ' + (kw.product_word.en||'')).toLowerCase();
+                return !query || s.includes(query);
+            });
+            
+            kws.forEach(kw => {
+                const h = getHeat(kw.popularity);
+                const checked = selectedIds.has(kw.id) ? 'checked' : '';
+                const cardClass = selectedIds.has(kw.id) ? 'kw-checked' : '';
+                catHtml += `
+                <div class="keyword-card ${cardClass}">
+                    <div class="kw-top">
+                        <div><input type="checkbox" class="kw-check" ${checked} onchange="toggleSelect('${kw.id}')">
+                        <span class="kw-name">${kw.product_word.zh}</span>
+                        <div class="kw-name-en">${kw.product_word.en||''}</div></div>
+                        <span class="heat-badge heat-${h}">${heatLabels[h]}</span>
+                    </div>
+                    <div class="kw-meta">
+                        <span class="tag">${sub.name.zh}</span>
+                        ${kw.notes ? `<span class="tag">${kw.notes}</span>` : ''}
+                    </div>
+                    <div class="kw-actions">
+                        <button class="btn btn-primary" onclick="editKeyword('${kw.id}')">编辑</button>
+                        <button class="btn" style="background:#ff4d4f;color:#fff;" onclick="deleteKeyword('${kw.id}')">删除</button>
+                    </div>
+                </div>`;
+            });
+        });
+
+        if (catHtml) {
+            html += `<div class="category-section">
+                <div class="cat-header">${cat.name.zh} <small>${cat.name.en||''}</small></div>
+                <div class="keywords-grid">${catHtml}</div>
+            </div>`;
+        }
+    });
+
+    container.innerHTML = html || '<p style="text-align:center;padding:40px;color:#999;">暂无匹配数据</p>';
+}
+
+// Selection
+function toggleSelect(id) {
+    if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+    renderAll();
+}
+function toggleSelectAll() {
+    const chk = document.getElementById('checkAll').checked;
+    // Collect all visible keyword IDs
+    const query = (document.getElementById('searchInput').value||'').toLowerCase();
+    const fCat = document.getElementById('filterCat').value;
+    const fSub = document.getElementById('filterSub').value;
+    keywordData.categories.forEach(cat => {
+        if(fCat&&cat.id!==fCat)return;
+        cat.subcategories.forEach(sub=>{
+            if(fSub&&sub.id!==fSub)return;
+            sub.keywords.forEach(kw=>{
+                const s=(kw.product_word.zh+' '+(kw.product_word.en||'')).toLowerCase();
+                if(!query||s.includes(query)){
+                    if(chk) selectedIds.add(kw.id); else selectedIds.delete(kw.id);
+                }
+            });
+        });
+    });
+    renderAll();
+}
+
+// Batch heat
+function showBatchHeatModal() {
+    document.getElementById('batchCount').textContent = selectedIds.size;
+    if(!selectedIds.size){alert('请先勾选关键词');return;}
+    document.getElementById('batchHeatModal').classList.add('active');
+}
+function closeBatchModal(){document.getElementById('batchHeatModal').classList.remove('active');}
+function applyBatchHeat(){
+    const val = parseInt(document.getElementById('batchHeatValue').value);
+    keywordData.categories.forEach(cat=>cat.subcategories.forEach(sub=>sub.keywords.forEach(kw=>{
+        if(selectedIds.has(kw.id)){kw.popularity=popMap[val];}
+    })));
+    closeBatchModal();
+    saveToLocal();
+    renderAll();
+}
+
+// CRUD
+function showAddModal(){
+    editingId=null; document.getElementById('modalTitle').textContent='新增关键词';
+    ['kwZh','kwEn','kwVariantZh','kwVariantEn','kwAttrZh','kwAttrEn','kwSceneZh','kwSceneEn','kwNotes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('kwHeat').value='2';
+    document.getElementById('keywordModal').classList.add('active');
+}
+function closeModal(){document.getElementById('keywordModal').classList.remove('active');}
+
+function editKeyword(id){
+    let found=null;
+    keywordData.categories.forEach(cat=>cat.subcategories.forEach(sub=>{
+        const kw=sub.keywords.find(k=>k.id===id);if(kw)found={kw,cat,sub};
+    }));
+    if(!found)return;
+    editingId=id; document.getElementById('modalTitle').textContent='编辑关键词';
+    document.getElementById('kwZh').value=found.kw.product_word.zh;
+    document.getElementById('kwEn').value=found.kw.product_word.en||'';
+    const vw=found.kw.variant_words||{},aw=found.kw.attribute_words||{},sw=found.kw.scene_words||{};
+    document.getElementById('kwVariantZh').value=(vw.zh||[]).join(',');
+    document.getElementById('kwVariantEn').value=(vw.en||[]).join(',');
+    document.getElementById('kwAttrZh').value=(aw.zh||[]).join(',');
+    document.getElementById('kwAttrEn').value=(aw.en||[]).join(',');
+    document.getElementById('kwSceneZh').value=(sw.zh||[]).join(',');
+    document.getElementById('kwSceneEn').value=(sw.en||[]).join(',');
+    document.getElementById('kwHeat').value=getHeat(found.kw.popularity)+'';
+    document.getElementById('kwNotes').value=found.kw.notes||'';
+    document.getElementById('kwCategory').value=found.cat.id;
+    renderKwSubcats(found.cat.id);
+    document.getElementById('kwSubcategory').value=found.sub.id;
+    document.getElementById('keywordModal').classList.add('active');
+}
+
+function saveKeyword(){
+    const zh=document.getElementById('kwZh').value.trim();
+    if(!zh){alert('请输入中文商品词');return;}
+    const heat=parseInt(document.getElementById('kwHeat').value);
+    const kw={
+        id:editingId||'kw_'+Date.now(),
+        product_word:{zh,en:document.getElementById('kwEn').value.trim()},
+        variant_words:{zh:document.getElementById('kwVariantZh').value.split(',').map(s=>s.trim()).filter(s=>s),en:document.getElementById('kwVariantEn').value.split(',').map(s=>s.trim()).filter(s=>s)},
+        attribute_words:{zh:document.getElementById('kwAttrZh').value.split(',').map(s=>s.trim()).filter(s=>s),en:document.getElementById('kwAttrEn').value.split(',').map(s=>s.trim()).filter(s=>s)},
+        scene_words:{zh:document.getElementById('kwSceneZh').value.split(',').map(s=>s.trim()).filter(s=>s),en:document.getElementById('kwSceneEn').value.split(',').map(s=>s.trim()).filter(s=>s)},
+        popularity:popMap[heat],
+        notes:document.getElementById('kwNotes').value.trim()
+    };
+    if(editingId){
+        keywordData.categories.forEach(cat=>cat.subcategories.forEach(sub=>{
+            const idx=sub.keywords.findIndex(k=>k.id===editingId);if(idx>-1)sub.keywords.splice(idx,1);
+        }));
+    }
+    const catId=document.getElementById('kwCategory').value,subId=document.getElementById('kwSubcategory').value;
+    const cat=keywordData.categories.find(c=>c.id===catId),sub=cat?.subcategories.find(s=>s.id===subId);
+    if(sub)sub.keywords.push(kw);
+    closeModal(); saveToLocal(); renderAll();
+}
+
+function deleteKeyword(id){
+    if(!confirm('确定删除?'))return;
+    keywordData.categories.forEach(cat=>cat.subcategories.forEach(sub=>{
+        const idx=sub.keywords.findIndex(k=>k.id===id);if(idx>-1)sub.keywords.splice(idx,1);
+    }));
+    selectedIds.delete(id); saveToLocal(); renderAll();
+}
+
+function saveToLocal(){
+    const blob=new Blob([JSON.stringify(keywordData,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='keyword_database.json';a.click();URL.revokeObjectURL(a.href);
+}
+
+function exportJSON(){saveToLocal();}
+
+// Tabs
+function showTab(tab,el){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('keywordsTab').style.display=tab==='keywords'?'block':'none';
+    document.getElementById('tipsTab').style.display=tab==='tips'?'block':'none';
+    const pt=document.getElementById('purchaseTab');
+    if(pt)pt.style.display=tab==='purchase'?'block':'none';
+    const ut=document.getElementById('usersTab');
+    if(ut)ut.style.display=tab==='users'?'block':'none';
+    const lt=document.getElementById('logsTab');
+    if(lt)lt.style.display=tab==='logs'?'block':'none';
+    if(tab==='purchase')loadAdminPurchaseRecords();
+    if(tab==='users')renderUsersTable();
+    if(tab==='logs')renderLogsTable();
+}
+
+// Tips
+function renderTips(){
+    document.getElementById('tipsGrid').innerHTML=tips.map(t=>`
+        <div class="tip-card">
+            <div class="tip-text">${t.text}</div>
+            <span class="tip-type-tag">${t.type}</span>
+            <div class="tip-actions"><button class="btn" style="background:#ff4d4f;color:#fff;" onclick="deleteTip(${t.id})">删除</button></div>
+        </div>`).join('');
+}
+function showAddTipModal(){document.getElementById('tipContent').value='';document.getElementById('tipModal').classList.add('active');}
+function closeTipModal(){document.getElementById('tipModal').classList.remove('active');}
+function saveTip(){
+    const text=document.getElementById('tipContent').value.trim();if(!text){alert('请输入内容');return;}
+    tips.push({id:Date.now(),text,type:document.getElementById('tipType').value});
+    localStorage.setItem('businessTips',JSON.stringify(tips)); closeTipModal(); renderTips();
+}
+function deleteTip(id){tips=tips.filter(t=>t.id!==id);localStorage.setItem('businessTips',JSON.stringify(tips));renderTips();}
+
+// ==================== 采购记录管理（后台） ====================
+let adminPurchaseRecords = [];
+
+function loadAdminPurchaseRecords() {
+    try {
+        adminPurchaseRecords = JSON.parse(localStorage.getItem('purchaseRecords') || '[]');
+    } catch(e) {
+        adminPurchaseRecords = [];
+    }
+    const dateInput = document.getElementById('adminPurchaseDate');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    renderAdminPurchaseTable();
+    updatePurchaseBadge();
+}
+
+function saveAdminPurchaseRecords() {
+    localStorage.setItem('purchaseRecords', JSON.stringify(adminPurchaseRecords));
+}
+
+function updatePurchaseBadge() {
+    const badge = document.getElementById('purchaseBadge');
+    if (badge) badge.textContent = adminPurchaseRecords.length;
+}
+
+function autoMatchKeyword(val) {
+    const matchDiv = document.getElementById('matchResult');
+    const select = document.getElementById('adminPurchaseSelect');
+    
+    if (!matchDiv || !select) return;
+    
+    if (!val || val.length < 1) {
+        matchDiv.style.display = 'none';
+        return;
+    }
+    
+    // 在已加载的词库数据中搜索
+    const results = [];
+    if (keywordData && keywordData.categories) {
+        for (const cat of keywordData.categories) {
+            const catName = cat.name ? (cat.name.zh || '') : '';
+            if (cat.subcategories) {
+                for (const sub of cat.subcategories) {
+                    const subName = sub.name ? (sub.name.zh || '') : '';
+                    if (sub.keywords) {
+                        for (const kw of sub.keywords) {
+                            const name = kw.product_word || {};
+                            const zh = name.zh || '';
+                            if (zh.includes(val)) {
+                                results.push({ id: kw.id, name: zh, category: catName + ' / ' + subName });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if (results.length > 0) {
+        matchDiv.style.display = 'flex';
+        select.innerHTML = '<option value="">-- 选择匹配的关键词 --</option>' +
+            results.slice(0, 10).map(r => `<option value="${r.name}" data-cat="${r.category}">${r.name} (${r.category})</option>`).join('');
+    } else {
+        matchDiv.style.display = 'none';
+    }
+}
+
+function adminAddPurchase() {
+    const kwInput = document.getElementById('adminPurchaseKw');
+    const select = document.getElementById('adminPurchaseSelect');
+    const dateInput = document.getElementById('adminPurchaseDate');
+    
+    let name = '';
+    let category = '';
+    
+    // 如果有匹配选中，用选中的值
+    if (select && select.value) {
+        name = select.value;
+        const opt = select.selectedOptions[0];
+        category = opt.getAttribute('data-cat') || '';
+    } else {
+        name = kwInput.value.trim();
+        category = '';
+    }
+    
+    if (!name) {
+        alert('请输入关键词名称');
+        return;
+    }
+    
+    // 检查重复
+    if (adminPurchaseRecords.find(r => r.name === name)) {
+        alert('该关键词已在采购记录中');
+        return;
+    }
+    
+    adminPurchaseRecords.push({
+        id: 'PR_' + Date.now(),
+        name: name,
+        category: category,
+        date: dateInput.value || new Date().toISOString().split('T')[0],
+        addedAt: new Date().toISOString()
+    });
+    
+    saveAdminPurchaseRecords();
+    renderAdminPurchaseTable();
+    updatePurchaseBadge();
+    kwInput.value = '';
+    if (select) select.innerHTML = '<option value="">-- 选择匹配的关键词 --</option>';
+    if (matchDiv) matchDiv.style.display = 'none';
+    showToast2('已添加 ' + name);
+}
+
+function adminDeletePurchase(id) {
+    if (!confirm('确定删除该采购记录?')) return;
+    adminPurchaseRecords = adminPurchaseRecords.filter(r => r.id !== id);
+    saveAdminPurchaseRecords();
+    renderAdminPurchaseTable();
+    updatePurchaseBadge();
+    showToast2('已删除');
+}
+
+function renderAdminPurchaseTable() {
+    const tbody = document.getElementById('purchaseTableBody');
+    if (!tbody) return;
+    
+    if (adminPurchaseRecords.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="purchase-empty-admin">📭 暂无采购记录，请在上方添加</td></tr>';
+        return;
+    }
+    
+    const sorted = [...adminPurchaseRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+    tbody.innerHTML = sorted.map(r => `
+        <tr>
+            <td><strong>${escapeHtml2(r.name)}</strong></td>
+            <td>${r.category ? '<span style="font-size:12px;color:#666;">' + escapeHtml2(r.category) + '</span>' : '-'}</td>
+            <td class="purchase-date-cell">${r.date}</td>
+            <td><button class="purchase-del-btn" onclick="adminDeletePurchase('${r.id}')">🗑删除</button></td>
+        </tr>
+    `).join('');
+}
+
+function escapeHtml2(t) {
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
+
+function showToast2(msg) {
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:6px;z-index:9999;';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+}
+
+// 页面加载时读取采购记录
+setTimeout(loadAdminPurchaseRecords, 500);
+
+// ==================== 用户管理系统 ====================
+const USERS_KEY = 'procurement_users';
+const LOGS_KEY = 'procurement_logs';
+
+// 加载用户列表
+function loadUsers() {
+    const users = localStorage.getItem(USERS_KEY);
+    return users ? JSON.parse(users) : initDefaultAdmin();
+}
+
+// 初始化默认管理员
+function initDefaultAdmin() {
+    const defaultUsers = {
+        'admin': {
+            username: 'admin',
+            realname: '管理员',
+            password: 'hash_1a2b3c4d', // admin123
+            createdAt: new Date().getTime(),
+            isAdmin: true,
+            status: 'approved'
+        }
+    };
+    localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
+    return defaultUsers;
+}
+
+// 保存用户列表
+function saveUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+// 获取客户端IP（模拟）
+async function getClientIP() {
+    try {
+        const resp = await fetch('https://api.ipify.org?format=json');
+        const data = await resp.json();
+        return data.ip || '未知';
+    } catch(e) {
+        return '未知IP';
+    }
+}
+
+// 添加日志
+async function addLog(type, username, detail) {
+    const logs = JSON.parse(localStorage.getItem(LOGS_KEY) || '[]');
+    const ip = await getClientIP();
+    logs.unshift({
+        time: new Date().toLocaleString('zh-CN'),
+        type: type,
+        username: username,
+        ip: ip,
+        detail: detail
+    });
+    // 只保留最近500条日志
+    if (logs.length > 500) logs.pop();
+    localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+}
+
+// 渲染用户表格
+function renderUsersTable() {
+    const users = loadUsers();
+    const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
+
+    let pendingCount = 0;
+    let html = '';
+
+    Object.values(users).forEach(user => {
+        if (user.status === 'pending') pendingCount++;
+
+        const statusClass = user.isAdmin ? 'status-admin' : 
+                           user.status === 'approved' ? 'status-approved' :
+                           user.status === 'rejected' ? 'status-rejected' : 'status-pending';
+        const statusText = user.isAdmin ? '管理员' :
+                          user.status === 'approved' ? '已通过' :
+                          user.status === 'rejected' ? '已拒绝' : '待审核';
+
+        const createTime = new Date(user.createdAt).toLocaleString('zh-CN');
+
+        html += `<tr>
+            <td><strong>${escapeHtml2(user.realname || user.username)}</strong></td>
+            <td>${escapeHtml2(user.username)}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td>${createTime}</td>
+            <td>
+                ${!user.isAdmin ? `
+                    ${user.status === 'pending' ? `
+                        <button class="btn btn-success" onclick="approveUser('${user.username}')" style="padding:4px 10px;font-size:12px;">通过</button>
+                        <button class="btn btn-warning" onclick="rejectUser('${user.username}')" style="padding:4px 10px;font-size:12px;">拒绝</button>
+                    ` : ''}
+                    <button class="btn btn-info" onclick="changePassword('${user.username}')" style="padding:4px 10px;font-size:12px;">🔑 改密</button>
+                    <button class="btn" style="padding:4px 10px;font-size:12px;background:#ff4d4f;color:#fff;" onclick="deleteUser('${user.username}')">🗑 删除</button>
+                ` : '<span style="color:#999;font-size:12px;">系统账号</span>'}
+            </td>
+        </tr>`;
+    });
+
+    tbody.innerHTML = html;
+    const badge = document.getElementById('userBadge');
+    if (badge) badge.textContent = pendingCount;
+}
+
+// 审核通过用户
+async function approveUser(username) {
+    const users = loadUsers();
+    if (users[username]) {
+        users[username].status = 'approved';
+        saveUsers(users);
+        await addLog('approve', username, '管理员审核通过用户注册');
+        renderUsersTable();
+        alert(`用户 ${username} 已审核通过！`);
+    }
+}
+
+// 拒绝用户
+async function rejectUser(username) {
+    if (!confirm(`确定要拒绝用户 ${username} 的注册申请吗？`)) return;
+    const users = loadUsers();
+    if (users[username]) {
+        users[username].status = 'rejected';
+        saveUsers(users);
+        await addLog('reject', username, '管理员拒绝用户注册');
+        renderUsersTable();
+    }
+}
+
+// 删除用户
+async function deleteUser(username) {
+    if (!confirm(`确定要删除用户 ${username} 吗？此操作不可恢复！`)) return;
+    const users = loadUsers();
+    if (users[username]) {
+        delete users[username];
+        saveUsers(users);
+        await addLog('delete', username, '管理员删除用户');
+        renderUsersTable();
+    }
+}
+
+// 修改用户密码
+function changePassword(username) {
+    const users = loadUsers();
+    if (!users[username]) return;
+    
+    const newPassword = prompt(`为用户 ${username} 设置新密码：\n（至少6位字符）`);
+    if (!newPassword) return;
+    
+    if (newPassword.length < 6) {
+        alert('密码至少需要6位字符！');
+        return;
+    }
+    
+    if (!confirm(`确认将用户 ${username} 的密码修改为新密码？`)) return;
+    
+    users[username].password = hashPassword(newPassword);
+    saveUsers(users);
+    addLog('password', username, '管理员修改用户密码');
+    alert(`用户 ${username} 的密码已修改成功！`);
+}
+
+// 密码哈希函数
+function hashPassword(password) {
+    let hash = 0;
+    for (let i = 0; i < password.length; i++) {
+        const char = password.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return 'hash_' + Math.abs(hash).toString(16);
+}
+
+// 渲染日志表格
+function renderLogsTable() {
+    const logs = JSON.parse(localStorage.getItem(LOGS_KEY) || '[]');
+    const tbody = document.getElementById('logsTableBody');
+    if (!tbody) return;
+
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:40px;">暂无操作日志</td></tr>';
+        return;
+    }
+
+    let html = '';
+    logs.slice(0, 100).forEach(log => {
+        const typeText = log.type === 'login' ? '登录' :
+                        log.type === 'logout' ? '登出' :
+                        log.type === 'register' ? '注册' :
+                        log.type === 'approve' ? '审核通过' :
+                        log.type === 'password' ? '修改密码' : '拒绝/删除';
+
+        const typeClass = log.type === 'login' ? 'log-type-login' :
+                         log.type === 'logout' ? 'log-type-logout' :
+                         log.type === 'register' ? 'log-type-register' :
+                         log.type === 'approve' ? 'log-type-approve' :
+                         log.type === 'password' ? 'log-type-password' : 'log-type-reject';
+
+        html += `<tr>
+            <td>${log.time}</td>
+            <td><span class="${typeClass}" style="font-weight:600;">${typeText}</span></td>
+            <td>${escapeHtml2(log.username)}</td>
+            <td>${escapeHtml2(log.ip)}</td>
+            <td>${escapeHtml2(log.detail || '-')}</td>
+        </tr>`;
+    });
+
+    tbody.innerHTML = html;
+}
+
+// 页面加载时渲染用户和日志
+setTimeout(renderUsersTable, 100);
+
+// ==================== 用户认证系统 ====================
+const CURRENT_USER_KEY = 'procurement_current_user';
+
+function checkAdminAuth() {
+    const userJson = localStorage.getItem(CURRENT_USER_KEY);
+    if (!userJson) {
+        alert('请先登录');
+        window.location.href = 'login.html';
+        return false;
+    }
+    const user = JSON.parse(userJson);
+    if (user.expires && new Date().getTime() > user.expires) {
+        localStorage.removeItem(CURRENT_USER_KEY);
+        alert('登录已过期，请重新登录！');
+        window.location.href = 'login.html';
+        return false;
+    }
+    return true;
+}
+
+function goToIndex() {
+    window.location.href = 'index.html';
+}
+
+function adminLogout() {
+    localStorage.removeItem(CURRENT_USER_KEY);
+    window.location.href = 'login.html';
+}
+
+// 页面加载时检查权限
+checkAdminAuth();
+
+// 显示用户信息
+(function() {
+    const userJson = localStorage.getItem('procurement_current_user');
+    if (userJson) {
+        const user = JSON.parse(userJson);
+        const infoEl = document.getElementById('adminUserInfo');
+        if (infoEl) {
+            infoEl.textContent = '当前用户: ' + (user.nickname || user.username);
+        }
+    }
+})();
+</script>
+</body>
+</html>

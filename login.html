@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 采购灵感引擎</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-container {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .auth-logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .auth-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .auth-subtitle {
+            font-size: 14px;
+            color: #666;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .form-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+        }
+        .form-input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .toggle-password:hover { opacity: 1; }
+        .auth-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+        }
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+        }
+        .auth-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .auth-switch {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: #666;
+        }
+        .auth-switch a {
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+        .error-msg {
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 6px;
+            display: none;
+        }
+        .error-msg.show { display: block; }
+        .success-msg {
+            color: #10b981;
+            font-size: 13px;
+            margin-top: 6px;
+            display: none;
+        }
+        .success-msg.show { display: block; }
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+        .form-hint {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-logo">🔍</div>
+            <div class="auth-title" id="formTitle">欢迎回来</div>
+            <div class="auth-subtitle" id="formSubtitle">登录以继续使用采购灵感引擎</div>
+        </div>
+
+        <!-- 登录表单 -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label">用户名</label>
+                <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名" autocomplete="username">
+                <div class="error-msg" id="loginUsernameError">请输入用户名</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">密码</label>
+                <div class="password-wrapper">
+                    <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+                    <button type="button" class="toggle-password" onclick="togglePassword('loginPassword')">👁️</button>
+                </div>
+                <div class="error-msg" id="loginPasswordError">请输入密码</div>
+            </div>
+            <div class="remember-me">
+                <input type="checkbox" id="rememberMe" checked>
+                <label for="rememberMe">记住我（7天免登录）</label>
+            </div>
+            <button type="submit" class="auth-btn" id="loginBtn">登 录</button>
+            <div class="error-msg" id="loginError" style="text-align: center; margin-top: 12px;"></div>
+        </form>
+
+        <!-- 注册表单（默认隐藏） -->
+        <form id="registerForm" style="display: none;">
+            <div class="form-group">
+                <label class="form-label">用户名</label>
+                <input type="text" class="form-input" id="regUsername" placeholder="3-20位字母、数字或下划线" autocomplete="username">
+                <div class="form-hint">用于登录的唯一标识</div>
+                <div class="error-msg" id="regUsernameError">用户名格式不正确</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">姓名</label>
+                <input type="text" class="form-input" id="regRealname" placeholder="请输入您的真实姓名" autocomplete="name">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">密码</label>
+                <div class="password-wrapper">
+                    <input type="password" class="form-input" id="regPassword" placeholder="至少6位字符" autocomplete="new-password">
+                    <button type="button" class="toggle-password" onclick="togglePassword('regPassword')">👁️</button>
+                </div>
+                <div class="error-msg" id="regPasswordError">密码至少6位</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">确认密码</label>
+                <div class="password-wrapper">
+                    <input type="password" class="form-input" id="regConfirmPassword" placeholder="再次输入密码" autocomplete="new-password">
+                    <button type="button" class="toggle-password" onclick="togglePassword('regConfirmPassword')">👁️</button>
+                </div>
+                <div class="error-msg" id="regConfirmError">两次密码不一致</div>
+            </div>
+            <button type="submit" class="auth-btn" id="registerBtn">注 册</button>
+            <div class="error-msg" id="registerError" style="text-align: center; margin-top: 12px;"></div>
+            <div class="success-msg" id="registerSuccess" style="text-align: center; margin-top: 12px;"></div>
+        </form>
+
+        <div class="auth-switch">
+            <span id="switchText">还没有账号？</span>
+            <a onclick="toggleForm()" id="switchLink">立即注册</a>
+        </div>
+    </div>
+
+    <script>
+        const USERS_KEY = 'procurement_users';
+        const CURRENT_USER_KEY = 'procurement_current_user';
+        const REMEMBER_KEY = 'procurement_remember';
+
+        let isLoginForm = true;
+
+        window.onload = function() {
+            checkAuth();
+        };
+
+        function checkAuth() {
+            const currentUser = localStorage.getItem(CURRENT_USER_KEY);
+            if (currentUser) {
+                const user = JSON.parse(currentUser);
+                if (user.expires && new Date().getTime() > user.expires) {
+                    localStorage.removeItem(CURRENT_USER_KEY);
+                    return;
+                }
+                window.location.href = 'index.html';
+            }
+        }
+
+        function toggleForm() {
+            isLoginForm = !isLoginForm;
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const formTitle = document.getElementById('formTitle');
+            const formSubtitle = document.getElementById('formSubtitle');
+            const switchText = document.getElementById('switchText');
+            const switchLink = document.getElementById('switchLink');
+
+            if (isLoginForm) {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                formTitle.textContent = '欢迎回来';
+                formSubtitle.textContent = '登录以继续使用采购灵感引擎';
+                switchText.textContent = '还没有账号？';
+                switchLink.textContent = '立即注册';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                formTitle.textContent = '创建账号';
+                formSubtitle.textContent = '注册后即可使用全部功能';
+                switchText.textContent = '已有账号？';
+                switchLink.textContent = '立即登录';
+            }
+        }
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function getUsers() {
+            const users = localStorage.getItem(USERS_KEY);
+            if (users) {
+                return JSON.parse(users);
+            }
+            
+            // 初始化默认管理员账号
+            const defaultUsers = {
+                'admin': {
+                    username: 'admin',
+                    nickname: '管理员',
+                    password: hashPassword('admin123'),
+                    createdAt: new Date().getTime(),
+                    isAdmin: true,
+                    status: 'approved'
+                }
+            };
+            saveUsers(defaultUsers);
+            return defaultUsers;
+        }
+
+        const LOGS_KEY = 'procurement_logs';
+
+        // 获取客户端IP
+        async function getClientIP() {
+            try {
+                const resp = await fetch('https://api.ipify.org?format=json');
+                const data = await resp.json();
+                return data.ip || '未知';
+            } catch(e) {
+                return '未知IP';
+            }
+        }
+
+        // 添加日志
+        async function addLog(type, username, detail) {
+            const logs = JSON.parse(localStorage.getItem(LOGS_KEY) || '[]');
+            const ip = await getClientIP();
+            logs.unshift({
+                time: new Date().toLocaleString('zh-CN'),
+                type: type,
+                username: username,
+                ip: ip,
+                detail: detail
+            });
+            if (logs.length > 500) logs.pop();
+            localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        }
+
+        function validateUsername(username) {
+            return /^[a-zA-Z0-9_]{3,20}$/.test(username);
+        }
+
+        function showError(elementId, message) {
+            const errorEl = document.getElementById(elementId);
+            if (message) {
+                errorEl.textContent = message;
+                errorEl.classList.add('show');
+            } else {
+                errorEl.classList.remove('show');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            let hasError = false;
+            if (!username) {
+                showError('loginUsernameError', '请输入用户名');
+                document.getElementById('loginUsername').classList.add('error');
+                hasError = true;
+            } else {
+                showError('loginUsernameError', '');
+                document.getElementById('loginUsername').classList.remove('error');
+            }
+
+            if (!password) {
+                showError('loginPasswordError', '请输入密码');
+                document.getElementById('loginPassword').classList.add('error');
+                hasError = true;
+            } else {
+                showError('loginPasswordError', '');
+                document.getElementById('loginPassword').classList.remove('error');
+            }
+
+            if (hasError) return;
+
+            const users = getUsers();
+            if (!users[username]) {
+                showError('loginError', '用户名不存在');
+                return;
+            }
+
+            if (users[username].password !== hashPassword(password)) {
+                showError('loginError', '密码错误');
+                return;
+            }
+
+            // 检查审核状态
+            if (!users[username].isAdmin && users[username].status !== 'approved') {
+                if (users[username].status === 'pending') {
+                    showError('loginError', '账号待审核，请等待管理员批准');
+                } else if (users[username].status === 'rejected') {
+                    showError('loginError', '账号申请已被拒绝，请联系管理员');
+                } else {
+                    showError('loginError', '账号状态异常，请联系管理员');
+                }
+                return;
+            }
+
+            const expires = rememberMe ? new Date().getTime() + 7 * 24 * 60 * 60 * 1000 : null;
+            const currentUser = {
+                username: username,
+                nickname: users[username].nickname || username,
+                loginTime: new Date().getTime(),
+                expires: expires
+            };
+
+            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
+            if (rememberMe) {
+                localStorage.setItem(REMEMBER_KEY, 'true');
+            }
+
+            // 记录登录日志
+            addLog('login', username, '用户登录成功');
+
+            showError('loginError', '');
+            window.location.href = 'index.html';
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('regUsername').value.trim();
+            const realname = document.getElementById('regRealname').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+            let hasError = false;
+
+            if (!validateUsername(username)) {
+                showError('regUsernameError', '用户名需3-20位字母、数字或下划线');
+                document.getElementById('regUsername').classList.add('error');
+                hasError = true;
+            } else {
+                showError('regUsernameError', '');
+                document.getElementById('regUsername').classList.remove('error');
+            }
+
+            if (password.length < 6) {
+                showError('regPasswordError', '密码至少6位');
+                document.getElementById('regPassword').classList.add('error');
+                hasError = true;
+            } else {
+                showError('regPasswordError', '');
+                document.getElementById('regPassword').classList.remove('error');
+            }
+
+            if (password !== confirmPassword) {
+                showError('regConfirmError', '两次密码不一致');
+                document.getElementById('regConfirmPassword').classList.add('error');
+                hasError = true;
+            } else {
+                showError('regConfirmError', '');
+                document.getElementById('regConfirmPassword').classList.remove('error');
+            }
+
+            if (hasError) return;
+
+            const users = getUsers();
+            if (users[username]) {
+                showError('registerError', '用户名已被注册');
+                return;
+            }
+
+            users[username] = {
+                username: username,
+                realname: realname,
+                password: hashPassword(password),
+                createdAt: new Date().getTime(),
+                status: 'pending' // 新用户默认待审核
+            };
+
+            saveUsers(users);
+
+            // 记录注册日志
+            addLog('register', username, '新用户注册，等待审核');
+
+            showError('registerError', '');
+            const successEl = document.getElementById('registerSuccess');
+            successEl.textContent = '注册成功！请等待管理员审核后登录...';
+            successEl.classList.add('show');
+
+            setTimeout(() => {
+                toggleForm();
+                document.getElementById('loginUsername').value = username;
+                successEl.classList.remove('show');
+            }, 2000);
+        });
+
+        function hashPassword(password) {
+            let hash = 0;
+            for (let i = 0; i < password.length; i++) {
+                const char = password.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return 'hash_' + Math.abs(hash).toString(16);
+        }
+
+        document.getElementById('loginUsername').addEventListener('input', function() {
+            this.classList.remove('error');
+            showError('loginUsernameError', '');
+            showError('loginError', '');
+        });
+        document.getElementById('loginPassword').addEventListener('input', function() {
+            this.classList.remove('error');
+            showError('loginPasswordError', '');
+            showError('loginError', '');
+        });
+        document.getElementById('regUsername').addEventListener('input', function() {
+            this.classList.remove('error');
+            showError('regUsernameError', '');
+            showError('registerError', '');
+        });
+        document.getElementById('regPassword').addEventListener('input', function() {
+            this.classList.remove('error');
+            showError('regPasswordError', '');
+        });
+        document.getElementById('regConfirmPassword').addEventListener('input', function() {
+            this.classList.remove('error');
+            showError('regConfirmError', '');
+        });
+    </script>
+</body>
+</html>
