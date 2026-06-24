@@ -302,7 +302,7 @@
             <label><input type="checkbox" id="checkAll" onchange="toggleSelectAll()"> 全选</label>
             <button class="btn btn-warning" onclick="showBatchHeatModal()">🔥 批量改热度</button>
             <button class="btn btn-success" onclick="showAddModal()">新增关键词</button>
-            <button class="btn btn-info" onclick="exportJSON()">📤 导出JSON</button>
+            <button class="btn btn-info" onclick="saveAndSync()">💾 保存同步到首页</button>
         </div>
 
         <div id="categoriesContainer"></div>
@@ -656,7 +656,7 @@ function applyBatchHeat(){
         if(selectedIds.has(kw.id)){kw.popularity=popMap[val];}
     })));
     closeBatchModal();
-    saveToLocal();
+    saveAndSync();
     renderAll();
 }
 
@@ -714,7 +714,7 @@ function saveKeyword(){
     const catId=document.getElementById('kwCategory').value,subId=document.getElementById('kwSubcategory').value;
     const cat=keywordData.categories.find(c=>c.id===catId),sub=cat?.subcategories.find(s=>s.id===subId);
     if(sub)sub.keywords.push(kw);
-    closeModal(); saveToLocal(); renderAll();
+    closeModal(); saveAndSync(); renderAll();
 }
 
 function deleteKeyword(id){
@@ -722,16 +722,26 @@ function deleteKeyword(id){
     keywordData.categories.forEach(cat=>cat.subcategories.forEach(sub=>{
         const idx=sub.keywords.findIndex(k=>k.id===id);if(idx>-1)sub.keywords.splice(idx,1);
     }));
-    selectedIds.delete(id); saveToLocal(); renderAll();
+    selectedIds.delete(id); saveAndSync(); renderAll();
 }
 
-function saveToLocal(){
-    const blob=new Blob([JSON.stringify(keywordData,null,2)],{type:'application/json'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download='keyword_database.json';a.click();URL.revokeObjectURL(a.href);
-}
+// 广播频道 - 用于通知首页刷新数据
+const syncChannel = new BroadcastChannel('procurement_sync');
 
-function exportJSON(){saveToLocal();}
+// 保存数据到localStorage并通知首页刷新
+function saveAndSync(){
+    // 保存关键词数据
+    localStorage.setItem('keyword_database', JSON.stringify(keywordData));
+    // 保存采购记录
+    localStorage.setItem('purchaseRecords', JSON.stringify(adminPurchaseRecords));
+    // 保存业务心法
+    localStorage.setItem('businessTips', JSON.stringify(tips));
+    
+    // 通知首页刷新
+    syncChannel.postMessage({ type: 'data_updated', timestamp: Date.now() });
+    
+    alert('✅ 数据已同步！首页刷新后即可看到最新内容');
+}
 
 // Tabs
 function showTab(tab,el){
@@ -787,6 +797,8 @@ function loadAdminPurchaseRecords() {
 
 function saveAdminPurchaseRecords() {
     localStorage.setItem('purchaseRecords', JSON.stringify(adminPurchaseRecords));
+    // 通知首页刷新采购记录
+    syncChannel.postMessage({ type: 'purchase_updated', timestamp: Date.now() });
 }
 
 function updatePurchaseBadge() {
