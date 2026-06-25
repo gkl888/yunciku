@@ -452,7 +452,39 @@
             .lucky-cards { flex-direction: column; align-items: center; }
             .lucky-card { width: 90%; max-width: 320px; }
         }
-    </style>
+    
+
+/* TOP Button */
+.back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.back-to-top.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.back-to-top:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+</style>
 </head>
 <body>
     <div class="container">
@@ -583,7 +615,7 @@
 
             info.textContent = '找到 ' + keywords.length + ' 个关键词';
 
-            grid.innerHTML = keywords.slice(0, 30).map(kw => {
+            grid.innerHTML = keywords.map(kw => {
                 const words = currentLang === 'en' ? kw.vw.en : kw.vw.zh;
                 const attrs = currentLang === 'en' ? kw.aw.en : kw.aw.zh;
                 const scenes = currentLang === 'en' ? kw.sw.en : kw.sw.zh;
@@ -624,7 +656,7 @@
                             scenes.slice(0, 3).map(w => '<span class="word-tag" onclick="copyText(\'' + w + '\')">' + w + '</span>').join('') +
                         '</div>' +
                     '</div>' +
-                    (kw.notes ? '<div class="keyword-note">💡 ' + kw.notes + '</div>' : '') +
+                    ((kw.notes && !kw.notes.includes('来自一刻相册')) ? '<div class="keyword-note">💡 ' + kw.notes + '</div>' : '') +
                     '<div class="platform-links">' +
                         '<a href="https://s.1688.com/selloffer/offer_search.htm?keywords=' + kw.pw_gbk + '" target="_blank" class="platform-btn platform-1688">1688</a>' +
                         '<a href="https://www.alibaba.com/trade/search?SearchText=' + encodeURIComponent(kw.pw.en) + '" target="_blank" class="platform-btn platform-alibaba">Alibaba</a>' +
@@ -899,5 +931,20 @@
             hotIdx = (hotIdx + 1) % hotSearches.length;
         }, 3000);
     </script>
+
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑ TOP</button>
+<script>
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.addEventListener('scroll', function() {
+    const btn = document.getElementById('backToTop');
+    if (window.scrollY > 300) {
+        btn.classList.add('show');
+    } else {
+        btn.classList.remove('show');
+    }
+});
+</script>
 </body>
 </html>

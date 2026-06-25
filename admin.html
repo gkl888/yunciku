@@ -596,7 +596,7 @@ function renderAll() {
                     </div>
                     <div class="kw-meta">
                         <span class="tag">${sub.name.zh}</span>
-                        ${kw.notes ? `<span class="tag">${kw.notes}</span>` : ''}
+                        ${(kw.notes && !kw.notes.includes('来自一刻相册')) ? `<span class="tag">${kw.notes}</span>` : ''}
                     </div>
                     <div class="kw-actions">
                         <button class="btn btn-primary" onclick="editKeyword('${kw.id}')">编辑</button>
