@@ -112,6 +112,7 @@
         }
         .categories-grid {
             display: grid;
+            grid-template-columns: repeat(4, 1fr); gap: 14px;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 10px;
         }
@@ -135,10 +136,14 @@
         .category-count { font-size: 11px; opacity: 0.7; margin-top: 5px; }
 
         .results-info { color: white; margin-bottom: 15px; font-size: 14px; }
+        .results-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        @media (max-width: 1200px) { .results-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 900px) { .results-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .results-grid { grid-template-columns: 1fr; } }
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
         }
         .keyword-card {
             background: white;
