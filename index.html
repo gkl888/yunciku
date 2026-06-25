@@ -1437,7 +1437,39 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102,126,234,0.4);
         }
-    </style>
+    
+
+/* TOP Button */
+.back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.back-to-top.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.back-to-top:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+</style>
 </head>
 <body>
     <!-- 用户状态栏 -->
@@ -1783,7 +1815,7 @@
 
             info.textContent = '找到 ' + keywords.length + ' 个关键词';
 
-            grid.innerHTML = keywords.slice(0, 30).map(kw => {
+            grid.innerHTML = keywords.map(kw => {
                 const words = currentLang === 'en' ? kw.vw.en : kw.vw.zh;
                 const attrs = currentLang === 'en' ? kw.aw.en : kw.aw.zh;
                 const scenes = currentLang === 'en' ? kw.sw.en : kw.sw.zh;
@@ -2237,5 +2269,22 @@ async function renderPurchaseProducts(catName) {
 
 
     </script>
+
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑ TOP</button>
+<script>
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Show/hide TOP button based on scroll position
+window.addEventListener('scroll', function() {
+    const btn = document.getElementById('backToTop');
+    if (window.scrollY > 300) {
+        btn.classList.add('show');
+    } else {
+        btn.classList.remove('show');
+    }
+});
+</script>
 </body>
 </html>
