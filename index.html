@@ -1565,14 +1565,20 @@
         }
 
         function checkLocalSync() {
-            // 优先使用本地缓存（后台已同步的最新数据）
+            // 优先使用本地缓存（后台已同步的最新数据，且未超过30分钟）
             const d = localStorage.getItem('keyword_database');
             if (d) {
                 try {
                     const p = JSON.parse(d);
-                    if (p.categories && p.categories.length > 0) {
+                    const savedAt = p._savedAt ? new Date(p._savedAt).getTime() : 0;
+                    const age = Date.now() - savedAt;
+                    if (p.categories && p.categories.length > 0 && age < 30 * 60 * 1000) {
                         DATA = p;
-                        console.log('[同步] 已加载本地缓存 v' + DATA.version);
+                        console.log('[同步] 已加载本地缓存 v' + DATA.version + ' (age: ' + Math.round(age/1000) + 's)');
+                    } else if (p.categories && p.categories.length > 0) {
+                        // 缓存超过30分钟，忽略
+                        localStorage.removeItem('keyword_database');
+                        console.log('[同步] 本地缓存已过期，已清除');
                     }
                 } catch(e) {}
             }
