@@ -1,0 +1,252 @@
+﻿
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            padding-top: 56px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        /* 标题 */
+        h1 { font-size: 24px; font-weight: 600; color: #1a1a2e; margin-bottom: 20px; }
+
+        /* Tab */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab {
+            padding: 8px 18px; border: none; background: #eef0f5; color: #666;
+            border-radius: 6px; cursor: pointer; font-size: 14px; transition: all .2s;
+        }
+        .tab.active { background: linear-gradient(135deg, #4a90d9, #357abd); color: #fff; }
+
+        /* 统计卡片 */
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .stat-card {
+            background: #fff; border-radius: 10px; padding: 20px; text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        }
+        .stat-value { font-size: 32px; font-weight: 700; color: #4a90d9; }
+        .stat-label { font-size: 13px; color: #999; margin-top: 4px; }
+
+        /* 工具*/
+        .toolbar {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+            background: #fff; padding: 12px 16px; border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 20px;
+        }
+        .toolbar input[type="text"] {
+            flex: 1; min-width: 180px; padding: 8px 14px; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 14px; outline: none;
+        }
+        .toolbar input:focus { border-color: #4a90d9; }
+        .toolbar select {
+            padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 14px; outline: none; background: #fff;
+        }
+        .toolbar label { font-size: 13px; color: #666; display: flex; align-items: center; gap: 4px; }
+        .toolbar label input { width: auto; }
+
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 13px; transition: all .2s; white-space: nowrap;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, #4a90d9, #357abd); color: #fff; }
+        .btn-success { background: linear-gradient(135deg, #52c41a, #389e0d); color: #fff; }
+        .btn-warning { background: linear-gradient(135deg, #faad14, #d48806); color: #fff; }
+        .btn-info { background: linear-gradient(135deg, #1890ff, #096dd9); color: #fff; }
+
+        /* 分类区块 */
+        .category-section { margin-bottom: 24px; }
+        .cat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; padding: 14px 20px; border-radius: 10px 10px 0 0;
+            font-size: 17px; font-weight: 600;
+        }
+        .cat-header small { font-size: 13px; opacity: .85; font-weight: 400; margin-left: 8px; }
+
+        /* 关键词网*/
+        .keywords-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 12px; background: #fff; padding: 16px; border-radius: 0 0 10px 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+        .keyword-card {
+            background: #fafbfc; border: 1px solid #eee; border-radius: 8px;
+            padding: 14px; transition: all .2s;
+        }
+        .keyword-card:hover { border-color: #4a90d9; box-shadow: 0 2px 8px rgba(74,144,217,.15); }
+        .kw-top { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; }
+        .kw-name { font-size: 16px; font-weight: 600; color: #1a1a2e; }
+        .kw-name-en { font-size: 12px; color: #999; margin-top: 2px; }
+        .kw-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .tag {
+            padding: 3px 10px; border-radius: 12px; font-size: 11px; background: #eef0f5; color: #666;
+        }
+        .heat-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; color: #fff; }
+        .heat-5 { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+        .heat-4 { background: linear-gradient(135deg, #fa8c16, #d46b08); }
+        .heat-3 { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .heat-2 { background: linear-gradient(135deg, #52c41a, #389e0d); }
+        .heat-1 { background: #ccc; color: #666; }
+        .kw-actions { display: flex; gap: 6px; }
+        .kw-actions .btn { padding: 4px 10px; font-size: 11px; }
+
+        /* 用户管理样式 */
+        .user-table, .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        }
+        .user-table th, .user-table td, .log-table th, .log-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .user-table th, .log-table th {
+            background: #f5f7fa;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+        .user-table td, .log-table td {
+            font-size: 13px;
+            color: #666;
+        }
+        .user-table tr:hover, .log-table tr:hover {
+            background: #f9fafb;
+        }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending { background: #fff7e6; color: #d46b08; }
+        .status-approved { background: #f6ffed; color: #52c41a; }
+        .status-rejected { background: #fff1f0; color: #ff4d4f; }
+        .status-admin { background: #e6f7ff; color: #1890ff; }
+        .log-table td:nth-child(3) { font-family: monospace; font-size: 12px; }
+        .log-type-login { color: #52c41a; }
+        .log-type-logout { color: #faad14; }
+        .log-type-register { color: #1890ff; }
+        .log-type-approve { color: #722ed1; }
+        .log-type-reject { color: #ff4d4f; }
+        .log-type-password { color: #13c2c2; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #fff; border-radius: 14px; padding: 28px; width: 92%;
+            max-width: 640px; max-height: 88vh; overflow-y: auto;
+        }
+        .modal-title { font-size: 19px; font-weight: 600; color: #333; margin-bottom: 20px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 4px; font-size: 13px; color: #666; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 14px; outline: none; background: #fafbfc;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #4a90d9; }
+        .form-group textarea { min-height: 70px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+
+        /* Tips */
+        .tips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+        .tip-card {
+            background: #fff; border-radius: 8px; padding: 14px;
+            border: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+        }
+        .tip-text { font-size: 14px; line-height: 1.6; color: #444; margin-bottom: 8px; }
+        .tip-type-tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; background: #e6f7ff; color: #1890ff; }
+        .tip-actions { display: flex; gap: 6px; margin-top: 8px; }
+        .tip-actions .btn { padding: 4px 10px; font-size: 11px; }
+
+        /* Checkbox for batch */
+        .kw-check { margin-right: 8px; cursor: pointer; width: 16px; height: 16px; accent-color: #4a90d9; }
+        .kw-checked { border-left: 3px solid #4a90d9 !important; background: #f0f6ff; }
+    
+        /* 采购记录管理样式 */
+        .purchase-tab-content { padding: 20px; }
+        .purchase-add-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .purchase-field { display: flex; flex-direction: column; gap: 4px; }
+        .purchase-field label { font-size: 12px; color: #666; font-weight: 600; }
+        .purchase-field input, .purchase-field select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .purchase-field input:focus { border-color: #11998e; }
+        .purchase-field select { min-width: 150px; }
+        .purchase-add-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg,#11998e,#38ef7d);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .purchase-add-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .purchase-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .purchase-table th {
+            background: #f8fafc;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 13px;
+            color: #666;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .purchase-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .purchase-table tr:hover td { background: #f0fdf4; }
+        .purchase-del-btn {
+            background: #fee2e2;
+            color: #ef4444;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .purchase-del-btn:hover { background: #fca5a5; }
+        .purchase-date-cell { color: #666; font-size: 13px; }
+        .purchase-empty-admin {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .purchase-count-badge {
+            background: #10b981;
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+
+
+
