@@ -1896,9 +1896,20 @@
 
         document.querySelectorAll('.filter-tag').forEach(tag => {
             tag.addEventListener('click', () => {
+                const filter = tag.dataset.filter;
+                // 如果是近一年采购按钮，特殊处理
+                if (filter === 'purchase') {
+                    togglePurchasePanel(true);
+                    return;
+                }
+                // 关闭采购面板（如果打开）
+                const panel = document.getElementById('purchasePanel');
+                if (panel && panel.classList.contains('show')) {
+                    togglePurchasePanel(false);
+                }
                 document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
                 tag.classList.add('active');
-                currentFilter = tag.dataset.filter;
+                currentFilter = filter;
                 performSearch();
             });
         });
