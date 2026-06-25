@@ -1843,10 +1843,10 @@
                 results = results.filter(kw => kw.categoryId === currentCategory);
             }
 
-            // 热度筛选
+            // 热度筛选（精确匹配）
             if (currentFilter !== 'all') {
                 const heatLevel = parseInt(currentFilter);
-                results = results.filter(kw => kw.h >= heatLevel);
+                results = results.filter(kw => kw.h === heatLevel);
             }
 
             // 关键词搜索
