@@ -2115,6 +2115,15 @@
 
 
 
+function escHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+function escId(s) {
+    return s.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
+}
+
 // 近一年采购记录（独立数据）
 let purchaseData = null;
 let currentPurchaseCat = 'all';
@@ -2223,14 +2232,7 @@ async function renderPurchaseProducts(catName) {
     `).join('');
 }
 
-function escHtml(s) {
-    const d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
-}
-function escId(s) {
-    return s.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
-}
+
 
 // 绑定按钮事件
 document.getElementById('btnPurchaseHistory').addEventListener('click', function(e) {
