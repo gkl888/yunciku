@@ -523,8 +523,8 @@
                 <button class="filter-tag active" data-filter="all">全部</button>
                 <button class="filter-tag" data-filter="5">🔥 超高热度</button>
                 <button class="filter-tag" data-filter="4">⚡ 高热度</button>
-                <button class="filter-tag" data-filter="2">📊 中热度</button>
-                <button class="filter-tag" data-filter="1">📉 一般热度</button>
+                <button class="filter-tag" data-filter="3">📊 中热度</button>
+                <button class="filter-tag" data-filter="2">📉 一般热度</button>
                 <div class="sort-options">
                     <span class="filter-label">排序:</span>
                     <button class="sort-btn active" data-sort="heat">热度优先</button>
@@ -617,8 +617,8 @@
         }
 
         function getHeatLabel(heat) {
-            const labels = ['', '一般', '中', '中高', '高', '超高'];
-            const icons = ['', '📉', '📊', '📈', '⚡', '🔥'];
+            const labels = ['', '', '\u4e00\u822c', '\u4e2d', '\u9ad8', '\u8d85\u9ad8'];
+            const icons = ['', '', '\ud83d\udcc9', '\ud83d\udcca', '\u26a1', '\ud83d\udd25'];
             return icons[heat] + ' ' + labels[heat];
         }
 
@@ -857,6 +857,22 @@
 
         renderCategories();
         performSearch();
+
+        // 近一年采购按钮独立事件绑定（确保可靠触发）
+        const _btnPH = document.getElementById('btnPurchaseHistory');
+        if (_btnPH) {
+            _btnPH.addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                togglePurchasePanel(true);
+            });
+        }
+        // 初始化时确保采购面板隐藏
+        setTimeout(function() {
+            const _pp = document.getElementById('purchasePanel');
+            if (_pp) _pp.style.display = 'none';
+        }, 100);
 
         const MOTIVATIONAL_QUOTES = [
             { text: '每一次询价,都是一次机会', icon: '🎯' },
