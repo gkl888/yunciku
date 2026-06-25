@@ -762,14 +762,9 @@
                 panel.style.display = 'block';
                 if (!purchaseData) loadPurchaseData();
                 panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else {
-                panel.style.display = 'none';
-                // 还原"全部"按钮
-                document.querySelectorAll('.filter-tag').forEach(t => {
-                    t.classList.toggle('active', t.dataset.filter === 'all');
-                });
-                currentFilter = 'all';
-            }
+                    } else {
+            panel.style.display = 'none';
+        }
         }
 
         function performSearch() {
