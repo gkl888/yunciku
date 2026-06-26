@@ -762,9 +762,9 @@
             info.textContent = '找到 ' + keywords.length + ' 个关键词';
 
             grid.innerHTML = keywords.map(kw => {
-                const words = currentLang === 'en' ? kw.vw.en : kw.vw.zh;
-                const attrs = currentLang === 'en' ? kw.aw.en : kw.aw.zh;
-                const scenes = currentLang === 'en' ? kw.sw.en : kw.sw.zh;
+                const words = currentLang === 'en' ? (kw.vw?.en || []) : (kw.vw?.zh || []);
+                const attrs = currentLang === 'en' ? (kw.aw?.en || []) : (kw.aw?.zh || []);
+                const scenes = currentLang === 'en' ? (kw.sw?.en || []) : (kw.sw?.zh || []);
 
                 return '<div class="keyword-card heat-' + kw.h + '">' +
                     '<div class="keyword-header">' +
@@ -912,7 +912,9 @@
             // 关键词搜索
             if (query) {
                 results = results.filter(kw => {
-                    const searchText = (kw.pw.zh + ' ' + kw.pw.en + ' ' + kw.vw.zh.join(' ') + ' ' + kw.vw.en.join(' ')).toLowerCase();
+                    const vwZh = (kw.vw?.zh || []).join(' ');
+                    const vwEn = (kw.vw?.en || []).join(' ');
+                    const searchText = ((kw.pw?.zh || '') + ' ' + (kw.pw?.en || '') + ' ' + vwZh + ' ' + vwEn).toLowerCase();
                     return searchText.includes(query);
                 });
             }
