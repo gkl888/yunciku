@@ -288,7 +288,20 @@
         function getUsers() {
             const users = localStorage.getItem(USERS_KEY);
             if (users) {
-                return JSON.parse(users);
+                const parsed = JSON.parse(users);
+                // 确保admin账号存在（防止被误删）
+                if (!parsed['admin']) {
+                    parsed['admin'] = {
+                        username: 'admin',
+                        nickname: '管理员',
+                        password: hashPassword('admin123'),
+                        createdAt: new Date().getTime(),
+                        isAdmin: true,
+                        status: 'approved'
+                    };
+                    saveUsers(parsed);
+                }
+                return parsed;
             }
             
             // 初始化默认管理员账号
