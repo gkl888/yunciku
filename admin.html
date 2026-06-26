@@ -498,13 +498,29 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function loadData() {
-    try {
-        const resp = await fetch('keyword_database.json');
-        keywordData = await resp.json();
-    } catch(e) {
-        console.error('加载数据失败:', e);
-        alert('加载数据失败，请确保已启动本地服务器');
-        return;
+    // 优先从localStorage读取已保存的数据
+    const saved = localStorage.getItem('keyword_database_v2');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (parsed.categories) {
+                keywordData = parsed;
+            }
+        } catch(e) {
+            // localStorage数据损坏，继续从文件加载
+        }
+    }
+    
+    // 如果没有localStorage数据，从文件加载
+    if (!keywordData.categories || keywordData.categories.length === 0) {
+        try {
+            const resp = await fetch('keyword_database.json');
+            keywordData = await resp.json();
+        } catch(e) {
+            console.error('加载数据失败:', e);
+            alert('加载数据失败，请确保已启动本地服务器');
+            return;
+        }
     }
     
     const savedTips = localStorage.getItem('businessTips');
