@@ -730,8 +730,12 @@ const syncChannel = new BroadcastChannel('procurement_sync');
 
 // 保存数据到localStorage并通知首页刷新
 function saveAndSync(){
-    // 保存关键词数据
-    localStorage.setItem('keyword_database', JSON.stringify(keywordData));
+    // 保存关键词数据（使用与首页相同的key）
+    const dataToSave = {
+        ...keywordData,
+        _savedAt: Date.now()
+    };
+    localStorage.setItem('keyword_database_v2', JSON.stringify(dataToSave));
     // 保存采购记录
     localStorage.setItem('purchaseRecords', JSON.stringify(adminPurchaseRecords));
     // 保存业务心法

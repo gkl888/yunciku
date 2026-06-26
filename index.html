@@ -695,13 +695,7 @@
             if (!saved) return;
             try {
                 const parsed = JSON.parse(saved);
-                const savedAt = parsed._savedAt;
-                if (!savedAt) return;
-                const age = Date.now() - savedAt;
-                if (age > 30 * 60 * 1000) {
-                    localStorage.removeItem('keyword_database_v2');
-                    return;
-                }
+                // 移除30分钟缓存过期限制，数据持久保存
                 if (parsed.categories) {
                     DATA = parsed;
                     allKeywords = flattenKeywords();
