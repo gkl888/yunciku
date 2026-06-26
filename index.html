@@ -435,7 +435,7 @@
         }
         .lucky-cards {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-top: 20px;
         }
@@ -532,6 +532,16 @@
         .quote-author {
             font-size: 0.8rem;
             color: #999;
+        }
+        @media (max-width: 1200px) {
+            .lucky-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .lucky-cards {
+                grid-template-columns: 1fr;
+            }
         }
 
     </style>
