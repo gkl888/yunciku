@@ -403,7 +403,7 @@
         }
 
         .lucky-draw-section {
-            background: white;
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 25px;
@@ -413,46 +413,125 @@
         .lucky-draw-title {
             font-size: 1.3rem;
             font-weight: 700;
-            color: #333;
+            color: white;
             margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         .lucky-draw-btn {
             padding: 14px 32px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
+            background: white;
+            color: #fda085;
             border: none;
             border-radius: 30px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         .lucky-draw-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(240, 147, 251, 0.5);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
         }
         .lucky-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
             margin-top: 20px;
         }
         .lucky-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: white;
+            border-radius: 15px;
             padding: 20px;
-            border-radius: 12px;
-            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+        }
+        .lucky-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f6d365, #fda085);
+        }
+        .lucky-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
         }
         .lucky-card-title {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 8px;
+            color: #333;
         }
         .lucky-card-en {
             font-size: 0.85rem;
-            opacity: 0.9;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .lucky-card-variant, .lucky-card-attr, .lucky-card-scene {
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .lucky-card-variant strong, .lucky-card-attr strong, .lucky-card-scene strong {
+            color: #fda085;
+        }
+        .lucky-card-links {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+        }
+        .lucky-card-links a {
+            font-size: 0.75rem;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .lucky-card-links a:hover {
+            text-decoration: underline;
+        }
+        .quote-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .quote-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        .quote-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .quote-text {
+            font-size: 1rem;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .quote-author {
+            font-size: 0.8rem;
+            color: #999;
         }
 
     </style>
@@ -1021,9 +1100,9 @@
                 card.innerHTML = `
                     <div class="lucky-card-title">${kw.pw.zh}</div>
                     <div class="lucky-card-en">${kw.pw.en}</div>
-                    ${vwArr.length ? '<div class="lucky-card-field"><strong>变体:</strong>' + vwArr.slice(0,3).join('、') + '</div>' : ''}
-                    ${awArr.length ? '<div class="lucky-card-field"><strong>属性:</strong>' + awArr.slice(0,3).join('、') + '</div>' : ''}
-                    ${swArr.length ? '<div class="lucky-card-field"><strong>场景:</strong>' + swArr.slice(0,3).join('、') + '</div>' : ''}
+                    ${vwArr.length ? '<div class="lucky-card-variant"><strong>变体:</strong>' + vwArr.slice(0,3).join('、') + '</div>' : ''}
+                    ${awArr.length ? '<div class="lucky-card-attr"><strong>属性:</strong>' + awArr.slice(0,3).join('、') + '</div>' : ''}
+                    ${swArr.length ? '<div class="lucky-card-scene"><strong>场景:</strong>' + swArr.slice(0,3).join('、') + '</div>' : ''}
                     <div class="lucky-card-links">
                         <a href="https://s.1688.com/selloffer/offer_search.htm?keywords=${kw.pw_gbk}" target="_blank">1688</a>
                         <a href="https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(kw.pw.en)}" target="_blank">Alibaba</a>
