@@ -420,7 +420,7 @@
         .lucky-draw-btn {
             padding: 14px 32px;
             background: white;
-            color: #fda085;
+            color: #e74c3c;
             border: none;
             border-radius: 30px;
             font-size: 16px;
@@ -483,18 +483,30 @@
             color: #fda085;
         }
         .lucky-card-links {
-            margin-top: 12px;
             display: flex;
-            gap: 10px;
+            gap: 6px;
+            margin-top: 12px;
         }
         .lucky-card-links a {
-            font-size: 0.75rem;
-            color: #667eea;
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
             text-decoration: none;
+            text-align: center;
+            color: white;
         }
         .lucky-card-links a:hover {
-            text-decoration: underline;
+            transform: scale(1.05);
+            filter: brightness(1.1);
         }
+        .lucky-card-links a:nth-child(1) { background: #ff6a00; }
+        .lucky-card-links a:nth-child(2) { background: #ff6b00; }
+        .lucky-card-links a:nth-child(3) { background: #e74c3c; }
         .quote-card {
             background: white;
             border-radius: 15px;
