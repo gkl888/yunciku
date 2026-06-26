@@ -749,6 +749,15 @@
             return icons[heat] + ' ' + labels[heat];
         }
 
+        function escHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function escJs(str) {
+            if (!str) return '';
+            return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+        }
+
         function renderKeywords(keywords) {
             const grid = document.getElementById('resultsGrid');
             const info = document.getElementById('resultsInfo');
@@ -769,44 +778,44 @@
                 return '<div class="keyword-card heat-' + kw.h + '">' +
                     '<div class="keyword-header">' +
                         '<div class="keyword-title-group">' +
-                            '<div class="keyword-title">' + kw.pw.zh + '</div>' +
-                            '<div class="keyword-title-en">' + kw.pw.en + '</div>' +
+                            '<div class="keyword-title">' + escHtml(kw.pw?.zh || '') + '</div>' +
+                            '<div class="keyword-title-en">' + escHtml(kw.pw?.en || '') + '</div>' +
                         '</div>' +
                         '<div class="keyword-actions">' +
-                            '<button class="copy-btn" onclick="copyKeyword(\'' + kw.pw.zh + '\', \'' + kw.pw.en + '\')">📋 复制</button>' +
+                            '<button class="copy-btn" onclick="copyKeyword(\'' + escJs(kw.pw?.zh || '') + '\', \'' + escJs(kw.pw?.en || '') + '\')">📋 复制</button>' +
                             '<span class="heat-badge">' + getHeatLabel(kw.h) + '</span>' +
                         '</div>' +
                     '</div>' +
                     '<div class="keyword-section">' +
                         '<div class="section-title">🏷️ 品类</div>' +
                         '<div class="word-tags">' +
-                            '<span class="word-tag">' + kw.category.zh + '</span>' +
-                            '<span class="word-tag">' + kw.subcategory.zh + '</span>' +
+                            '<span class="word-tag">' + escHtml(kw.category?.zh || '') + '</span>' +
+                            '<span class="word-tag">' + escHtml(kw.subcategory?.zh || '') + '</span>' +
                         '</div>' +
                     '</div>' +
                     '<div class="keyword-section">' +
                         '<div class="section-title">🔄 变体词</div>' +
                         '<div class="word-tags">' +
-                            words.slice(0, 4).map(w => '<span class="word-tag" onclick="copyText(\'' + w + '\')">' + w + '</span>').join('') +
+                            words.slice(0, 4).map(w => '<span class="word-tag" onclick="copyText(\'' + escJs(w) + '\')">' + escHtml(w) + '</span>').join('') +
                         '</div>' +
                     '</div>' +
                     '<div class="keyword-section">' +
                         '<div class="section-title">⚙️ 属性词</div>' +
                         '<div class="word-tags">' +
-                            attrs.slice(0, 3).map(w => '<span class="word-tag" onclick="copyText(\'' + w + '\')">' + w + '</span>').join('') +
+                            attrs.slice(0, 3).map(w => '<span class="word-tag" onclick="copyText(\'' + escJs(w) + '\')">' + escHtml(w) + '</span>').join('') +
                         '</div>' +
                     '</div>' +
                     '<div class="keyword-section">' +
                         '<div class="section-title">🎯 场景词</div>' +
                         '<div class="word-tags">' +
-                            scenes.slice(0, 3).map(w => '<span class="word-tag" onclick="copyText(\'' + w + '\')">' + w + '</span>').join('') +
+                            scenes.slice(0, 3).map(w => '<span class="word-tag" onclick="copyText(\'' + escJs(w) + '\')">' + escHtml(w) + '</span>').join('') +
                         '</div>' +
                     '</div>' +
-                    ((kw.notes && !kw.notes.includes('来自一刻相册')) ? '<div class="keyword-note">💡 ' + kw.notes + '</div>' : '') +
+                    ((kw.notes && !kw.notes.includes('来自一刻相册')) ? '<div class="keyword-note">💡 ' + escHtml(kw.notes) + '</div>' : '') +
                     '<div class="platform-links">' +
-                        '<a href="https://s.1688.com/selloffer/offer_search.htm?keywords=' + kw.pw_gbk + '" target="_blank" class="platform-btn platform-1688">1688</a>' +
-                        '<a href="https://www.alibaba.com/trade/search?SearchText=' + encodeURIComponent(kw.pw.en) + '" target="_blank" class="platform-btn platform-alibaba">Alibaba</a>' +
-                        '<a href="https://www.made-in-china.com/products-search/hot-china-products/' + kw.pw.en.replace(/ /g, '_') + '.html" target="_blank" class="platform-btn platform-mic">Made-in-China</a>' +
+                        '<a href="https://s.1688.com/selloffer/offer_search.htm?keywords=' + encodeURIComponent(kw.pw_gbk || '') + '" target="_blank" class="platform-btn platform-1688">1688</a>' +
+                        '<a href="https://www.alibaba.com/trade/search?SearchText=' + encodeURIComponent(kw.pw?.en || '') + '" target="_blank" class="platform-btn platform-alibaba">Alibaba</a>' +
+                        '<a href="https://www.made-in-china.com/products-search/hot-china-products/' + (kw.pw?.en || '').replace(/ /g, '_') + '.html" target="_blank" class="platform-btn platform-mic">Made-in-China</a>' +
                     '</div>' +
                 '</div>';
             }).join('');
