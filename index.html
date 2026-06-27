@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.7.1-FINAL-20260627-FIX-LOAD -->
+    <!-- 缓存版本: v2.7.2-FINAL-20260627-FIX-ORDER -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1303';
+        var v='20260627-1304';
         var lastV = localStorage.getItem('app_version');
         // 如果版本变化或没有版本记录，更新版本并跳转一次
         if(lastV !== v){
@@ -767,32 +767,6 @@
             return flat;
         }
 
-        // 等待数据加载完成
-        (async function init() {
-            await loadDataFromJson();
-            if (!DATA) {
-                console.error('[Init] 数据加载失败');
-                return;
-            }
-            allKeywords = flattenKeywords();
-            
-            // 更新统计
-            document.getElementById('statCats').textContent = DATA.categories.length;
-            document.getElementById('statSubs').textContent = DATA.categories.reduce((s,c) => s + c.subcategories.length, 0);
-            document.getElementById('statKws').textContent = allKeywords.length;
-            
-            // 渲染
-            renderCategories();
-            performSearch();
-            
-            // 隐藏加载遮罩
-            document.getElementById('loadingOverlay').classList.add('hidden');
-            
-            console.log('[Init] 初始化完成，关键词数:', allKeywords.length);
-        })();
-
-        // BroadcastChannel 实时同步
-        
         // 数据加载状态
         let dataLoaded = false;
         let loadPromise = null;
@@ -850,6 +824,32 @@
                 return sum + cat.subcategories.reduce((s, sub) => s + sub.keywords.length, 0);
             }, 0);
         }
+
+        // 等待数据加载完成
+        (async function init() {
+            await loadDataFromJson();
+            if (!DATA) {
+                console.error('[Init] 数据加载失败');
+                return;
+            }
+            allKeywords = flattenKeywords();
+            
+            // 更新统计
+            document.getElementById('statCats').textContent = DATA.categories.length;
+            document.getElementById('statSubs').textContent = DATA.categories.reduce((s,c) => s + c.subcategories.length, 0);
+            document.getElementById('statKws').textContent = allKeywords.length;
+            
+            // 渲染
+            renderCategories();
+            performSearch();
+            
+            // 隐藏加载遮罩
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            
+            console.log('[Init] 初始化完成，关键词数:', allKeywords.length);
+        })();
+
+        // BroadcastChannel 实时同步
         
 function checkLocalSync() {
             const saved = localStorage.getItem('keyword_database_v2');
