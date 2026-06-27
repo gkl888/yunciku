@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.7.3-FINAL-20260627-FIX-FUNC -->
+    <!-- 缓存版本: v2.7.4-FIX-1688-URL-20260627-1355 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1305';
+        var v='20260627-1355';
         var lastV = localStorage.getItem('app_version');
         // 如果版本变化或没有版本记录，更新版本并跳转一次
         if(lastV !== v){
@@ -1048,7 +1048,7 @@ function checkLocalSync() {
                     '</div>' +
                     ((kw.notes && !kw.notes.includes('来自一刻相册')) ? '<div class="keyword-note">💡 ' + escHtml(kw.notes) + '</div>' : '') +
                     '<div class="platform-links">' +
-                        '<a href="https://s.1688.com/selloffer/offer_search.htm?keywords=' + encodeURIComponent(kw.pw_gbk || '') + '" target="_blank" class="platform-btn platform-1688">1688</a>' +
+                        '<a href="https://s.1688.com/selloffer/offer_search.htm?keywords=' + encodeURIComponent(kw.pw?.zh || '') + '" target="_blank" class="platform-btn platform-1688">1688</a>' +
                         '<a href="https://www.alibaba.com/trade/search?SearchText=' + encodeURIComponent(kw.pw?.en || '') + '" target="_blank" class="platform-btn platform-alibaba">Alibaba</a>' +
                         '<a href="https://www.made-in-china.com/products-search/hot-china-products/' + (kw.pw?.en || '').replace(/ /g, '_') + '.html" target="_blank" class="platform-btn platform-mic">Made-in-China</a>' +
                     '</div>';
@@ -1430,7 +1430,7 @@ function checkLocalSync() {
                     ${awArr.length ? '<div class="lucky-card-attr"><strong>属性:</strong>' + awArr.slice(0,3).join('、') + '</div>' : ''}
                     ${swArr.length ? '<div class="lucky-card-scene"><strong>场景:</strong>' + swArr.slice(0,3).join('、') + '</div>' : ''}
                     <div class="lucky-card-links">
-                        <a href="https://s.1688.com/selloffer/offer_search.htm?keywords=${kw.pw_gbk || pwZh}" target="_blank">1688</a>
+                        <a href="https://s.1688.com/selloffer/offer_search.htm?keywords=${encodeURIComponent(kw.pw?.zh || '')}" target="_blank" class="platform-btn platform-1688">1688</a>Zh}" target="_blank">1688</a>
                         <a href="https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(pwEn)}" target="_blank">Alibaba</a>
                         <a href="https://www.made-in-china.com/products-search/hot-china-products/${encodeURIComponent(pwEn)}.html" target="_blank">MIC</a>
                     </div>
