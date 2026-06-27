@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.7.6-FIX-LUCKY-BTN-20260627-1535 -->
+    <!-- 缓存版本: v2.7.6-FIX-LAYOUT-20260627-1600 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1535';
+        var v='20260627-1600';
         var lastV = localStorage.getItem('app_version');
         // 如果版本变化或没有版本记录，更新版本并跳转一次
         if(lastV !== v){
@@ -108,16 +108,17 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
-        .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .filter-label { font-size: 13px; color: #666; margin-right: 5px; }
         .filter-tag {
-            padding: 8px 16px;
+            padding: 7px 14px;
             background: #f0f0f0;
             border: none;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             transition: all 0.3s;
+            white-space: nowrap;
         }
         .filter-tag:hover, .filter-tag.active {
             background: #667eea;
@@ -126,8 +127,9 @@
 
         .sort-options {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-left: auto;
+            white-space: nowrap;
         }
         .sort-btn {
             padding: 8px 16px;
@@ -428,6 +430,17 @@
             margin-bottom: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
+        .purchase-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        @media (max-width: 900px) {
+            .purchase-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .purchase-grid { grid-template-columns: 1fr; }
+        }
 
         @media (max-width: 768px) {
             .search-input-wrapper { flex-direction: column; }
@@ -436,6 +449,11 @@
             .lang-toggle { border-radius: 10px; }
             .keyword-card { padding: 16px; }
             h1 { font-size: 1.8rem; }
+            .stats { gap: 15px; flex-wrap: wrap; justify-content: center; }
+            .stat-item { padding: 8px 14px; font-size: 13px; }
+            .filter-tag { padding: 6px 10px; font-size: 11px; }
+            .sort-options { margin-left: 0; }
+            .sort-btn { padding: 6px 10px; font-size: 11px; }
         }
 
         .back-to-top {
@@ -698,7 +716,7 @@
             <div class="purchase-search" style="margin-bottom:20px;">
                 <input type="text" id="purchaseSearchInput" placeholder="🔍 搜索采购产品..." oninput="renderPurchaseProducts(currentPurchaseCat)" style="width:100%; padding:12px 20px; border:2px solid #e0e0e0; border-radius:25px; font-size:14px; outline:none;">
             </div>
-            <div class="purchase-grid" id="purchaseGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px;"></div>
+            <div class="purchase-grid" id="purchaseGrid"></div>
         </div>
         
         <div class="results-grid" id="resultsGrid"></div>
@@ -798,7 +816,7 @@
                 // 从 data.json 加载
                 try {
                     console.log('[Init] 从 data.json 加载...');
-                    const res = await fetch('./data.json?v=20260627');
+                    const res = await fetch('./data.json?v=20260627-1600');
                     if (!res.ok) {
                         throw new Error('HTTP ' + res.status);
                     }
