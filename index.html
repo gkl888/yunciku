@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1225-FRAGMENT -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1230-DEBUG -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 强制缓存破坏 - Chrome特别处理
     (function(){
-        var v='20260627-1225';
+        var v='20260627-1230';
         if(!location.search.includes('v='+v)){
             location.replace(location.href.split('?')[0]+'?v='+v+'&_='+Date.now());
         }
@@ -708,6 +708,7 @@
         }
 
         allKeywords = flattenKeywords();
+        console.log('[Init] 关键词数据已加载，数量:', allKeywords.length);
 
         // BroadcastChannel 实时同步
         function checkLocalSync() {
@@ -800,6 +801,7 @@
         }
 
         function renderKeywords(keywords) {
+            console.log('[Render] 渲染关键词，数量:', keywords?.length || 0);
             const grid = document.getElementById('resultsGrid');
             const info = document.getElementById('resultsInfo');
 
