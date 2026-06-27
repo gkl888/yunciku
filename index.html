@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1150-FULLFIX -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1155-LUCKYFIX -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 强制缓存破坏 - Chrome特别处理
     (function(){
-        var v='20260627-1150';
+        var v='20260627-1155';
         if(!location.search.includes('v='+v)){
             location.replace(location.href.split('?')[0]+'?v='+v+'&_='+Date.now());
         }
@@ -1182,21 +1182,24 @@
             const container = document.getElementById('luckyCards');
             container.innerHTML = '';
             picked.forEach(kw => {
+                if (!kw || !kw.pw) return; // 跳过无效关键词
                 const card = document.createElement('div');
                 card.className = 'lucky-card';
                 const vwArr = (kw.vw && kw.vw.zh) ? kw.vw.zh : [];
                 const awArr = (kw.aw && kw.aw.zh) ? kw.aw.zh : [];
                 const swArr = (kw.sw && kw.sw.zh) ? kw.sw.zh : [];
+                const pwZh = kw.pw.zh || '';
+                const pwEn = kw.pw.en || '';
                 card.innerHTML = `
-                    <div class="lucky-card-title">${kw.pw.zh}</div>
-                    <div class="lucky-card-en">${kw.pw.en}</div>
+                    <div class="lucky-card-title">${pwZh}</div>
+                    <div class="lucky-card-en">${pwEn}</div>
                     ${vwArr.length ? '<div class="lucky-card-variant"><strong>变体:</strong>' + vwArr.slice(0,3).join('、') + '</div>' : ''}
                     ${awArr.length ? '<div class="lucky-card-attr"><strong>属性:</strong>' + awArr.slice(0,3).join('、') + '</div>' : ''}
                     ${swArr.length ? '<div class="lucky-card-scene"><strong>场景:</strong>' + swArr.slice(0,3).join('、') + '</div>' : ''}
                     <div class="lucky-card-links">
-                        <a href="https://s.1688.com/selloffer/offer_search.htm?keywords=${kw.pw_gbk}" target="_blank">1688</a>
-                        <a href="https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(kw.pw.en)}" target="_blank">Alibaba</a>
-                        <a href="https://www.made-in-china.com/products-search/hot-china-products/${encodeURIComponent(kw.pw.en)}.html" target="_blank">MIC</a>
+                        <a href="https://s.1688.com/selloffer/offer_search.htm?keywords=${kw.pw_gbk || pwZh}" target="_blank">1688</a>
+                        <a href="https://www.alibaba.com/trade/search?SearchText=${encodeURIComponent(pwEn)}" target="_blank">Alibaba</a>
+                        <a href="https://www.made-in-china.com/products-search/hot-china-products/${encodeURIComponent(pwEn)}.html" target="_blank">MIC</a>
                     </div>
                 `;
                 container.appendChild(card);
