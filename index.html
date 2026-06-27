@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.7.2-FINAL-20260627-FIX-ORDER -->
+    <!-- 缓存版本: v2.7.3-FINAL-20260627-FIX-FUNC -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1304';
+        var v='20260627-1305';
         var lastV = localStorage.getItem('app_version');
         // 如果版本变化或没有版本记录，更新版本并跳转一次
         if(lastV !== v){
@@ -849,6 +849,32 @@
             console.log('[Init] 初始化完成，关键词数:', allKeywords.length);
         })();
 
+        // 渲染类目导航
+        function renderCategories() {
+            const grid = document.getElementById('categoriesGrid');
+            if (!grid || !DATA || !DATA.categories) return;
+            
+            grid.innerHTML = DATA.categories.map(cat => `
+                <div class="category-card" onclick="filterByCategory('${cat.id}')">
+                    <div class="category-name">${escHtml(cat.name.zh)}</div>
+                    <div class="category-count">${cat.subcategories.reduce((sum, s) => sum + s.keywords.length, 0)} 个词</div>
+                </div>
+            `).join('');
+        }
+        
+        // 按类目筛选
+        function filterByCategory(catId) {
+            currentCategory = catId;
+            const cat = DATA.categories.find(c => c.id === catId);
+            if (cat) {
+                document.getElementById('searchInput').value = '';
+                const catKeywords = allKeywords.filter(k => k.categoryId === catId);
+                renderKeywords(catKeywords);
+                document.getElementById('resultsInfo').textContent = `📂 ${escHtml(cat.name.zh)} - 共 ${catKeywords.length} 个关键词`;
+                window.scrollTo({ top: document.querySelector('.search-box').offsetTop - 20, behavior: 'smooth' });
+            }
+        }
+        
         // BroadcastChannel 实时同步
         
 function checkLocalSync() {
