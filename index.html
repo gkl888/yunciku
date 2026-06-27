@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.7.0-FINAL-20260627-PERF-OPT -->
+    <!-- 缓存版本: v2.7.1-FINAL-20260627-FIX-LOAD -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1300';
+        var v='20260627-1301';
         var lastV = localStorage.getItem('app_version');
         // 如果版本变化或没有版本记录，更新版本并跳转一次
         if(lastV !== v){
@@ -802,6 +802,8 @@
             if (loadPromise) return loadPromise;
             
             loadPromise = new Promise(async (resolve) => {
+                console.log('[Init] 开始加载数据...');
+                
                 // 先检查 localStorage
                 const saved = localStorage.getItem('keyword_database_v2');
                 if (saved) {
@@ -815,20 +817,26 @@
                             return;
                         }
                     } catch(e) {
-                        console.warn('[Init] 缓存解析失败');
+                        console.warn('[Init] 缓存解析失败:', e);
                     }
                 }
                 
                 // 从 data.json 加载
                 try {
+                    console.log('[Init] 从 data.json 加载...');
                     const res = await fetch('data.json?v=20260627');
+                    if (!res.ok) {
+                        throw new Error('HTTP ' + res.status);
+                    }
                     DATA = await res.json();
                     dataLoaded = true;
                     // 缓存到 localStorage
                     localStorage.setItem('keyword_database_v2', JSON.stringify(DATA));
-                    console.log('[Init] 从 data.json 加载，关键词数:', countKeywords(DATA));
+                    console.log('[Init] 从 data.json 加载成功，关键词数:', countKeywords(DATA));
                 } catch(e) {
                     console.error('[Init] 数据加载失败:', e);
+                    // 显示错误信息
+                    document.querySelector('.loading-spinner p').textContent = '加载失败，请刷新重试';
                 }
                 resolve();
             });
