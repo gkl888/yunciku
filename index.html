@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.7.7-LAYOUT2-20260627 -->
+    <!-- 缓存版本: v2.7.8-LAYOUT3-20260627 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1610';
+        var v='20260627-1620';
         var lastV = localStorage.getItem('app_version');
         // 如果版本变化或没有版本记录，更新版本并跳转一次
         if(lastV !== v){
@@ -163,8 +163,8 @@
         }
         .categories-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 8px;
         }
         .category-card {
             padding: 12px;
@@ -445,7 +445,7 @@
         @media (max-width: 768px) {
             .search-input-wrapper { flex-direction: column; }
             .results-grid { grid-template-columns: repeat(2, 1fr); }
-            .categories-grid { grid-template-columns: repeat(3, 1fr); }
+            .categories-grid { grid-template-columns: repeat(4, 1fr); }
             .lang-toggle { border-radius: 10px; }
             .keyword-card { padding: 16px; }
             h1 { font-size: 1.8rem; }
