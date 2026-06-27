@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1246-DIRECT -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1248-CLEAN -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1246';
+        var v='20260627-1248';
         var lastV = localStorage.getItem('app_version');
         // 如果版本变化或没有版本记录，更新版本并跳转一次
         if(lastV !== v){
@@ -935,10 +935,10 @@
             grid.appendChild(fragment);
             renderedCount = end;
             
-            // 显示加载进度
+            // 显示加载进度（仅当还有更多内容时显示）
             if (renderedCount < currentKeywords.length) {
                 const info = document.getElementById('resultsInfo');
-                info.textContent = '找到 ' + currentKeywords.length + ' 个关键词 (已显示 ' + renderedCount + ' 个)';
+                info.textContent = '找到 ' + currentKeywords.length + ' 个关键词';
             }
         }
 
