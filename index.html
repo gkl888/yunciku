@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1240-FIXED -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1245-PERF -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 强制缓存破坏 - Chrome特别处理
     (function(){
-        var v='20260627-1240';
+        var v='20260627-1245';
         if(!location.search.includes('v='+v)){
             location.replace(location.href.split('?')[0]+'?v='+v+'&_='+Date.now());
         }
@@ -295,6 +295,21 @@
         }
         .empty-state-title { font-size: 1.5rem; margin-bottom: 10px; }
         .empty-state-desc { font-size: 1rem; opacity: 0.8; }
+        
+        /* 加载动画 */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
         .legend {
             display: flex;
@@ -799,6 +814,13 @@
             return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
         }
 
+        // 虚拟滚动优化
+        let currentKeywords = [];
+        let renderedCount = 0;
+        const INITIAL_RENDER_COUNT = 30;  // 初始渲染30个
+        const BATCH_RENDER_COUNT = 20;    // 每次滚动渲染20个
+        let isRendering = false;
+        
         function renderKeywords(keywords) {
             const grid = document.getElementById('resultsGrid');
             const info = document.getElementById('resultsInfo');
@@ -810,11 +832,50 @@
             }
 
             info.textContent = '找到 ' + keywords.length + ' 个关键词';
-
-            // 使用 DocumentFragment 优化性能
+            
+            // 保存当前关键词列表
+            currentKeywords = keywords;
+            renderedCount = 0;
+            grid.innerHTML = '';
+            
+            // 移除旧的滚动监听
+            window.removeEventListener('scroll', handleScrollRender);
+            
+            // 初始渲染第一批
+            renderKeywordBatch(INITIAL_RENDER_COUNT);
+            
+            // 如果还有更多，添加滚动监听
+            if (keywords.length > INITIAL_RENDER_COUNT) {
+                window.addEventListener('scroll', handleScrollRender, { passive: true });
+            }
+        }
+        
+        function handleScrollRender() {
+            if (isRendering || renderedCount >= currentKeywords.length) return;
+            
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const windowHeight = window.innerHeight;
+            const docHeight = document.documentElement.scrollHeight;
+            
+            // 距离底部300px时加载更多
+            if (scrollTop + windowHeight >= docHeight - 300) {
+                isRendering = true;
+                requestAnimationFrame(() => {
+                    renderKeywordBatch(renderedCount + BATCH_RENDER_COUNT);
+                    isRendering = false;
+                });
+            }
+        }
+        
+        function renderKeywordBatch(endIndex) {
+            const grid = document.getElementById('resultsGrid');
+            const end = Math.min(endIndex, currentKeywords.length);
+            
+            // 使用 DocumentFragment 批量插入
             const fragment = document.createDocumentFragment();
             
-            keywords.forEach(kw => {
+            for (let i = renderedCount; i < end; i++) {
+                const kw = currentKeywords[i];
                 const words = currentLang === 'en' ? (kw.vw?.en || []) : (kw.vw?.zh || []);
                 const attrs = currentLang === 'en' ? (kw.aw?.en || []) : (kw.aw?.zh || []);
                 const scenes = currentLang === 'en' ? (kw.sw?.en || []) : (kw.sw?.zh || []);
@@ -864,20 +925,38 @@
                         '<a href="https://www.made-in-china.com/products-search/hot-china-products/' + (kw.pw?.en || '').replace(/ /g, '_') + '.html" target="_blank" class="platform-btn platform-mic">Made-in-China</a>' +
                     '</div>';
                 fragment.appendChild(cardDiv);
-            });
+            }
             
-            grid.innerHTML = '';
             grid.appendChild(fragment);
+            renderedCount = end;
+            
+            // 显示加载进度
+            if (renderedCount < currentKeywords.length) {
+                const info = document.getElementById('resultsInfo');
+                info.textContent = '找到 ' + currentKeywords.length + ' 个关键词 (已显示 ' + renderedCount + ' 个)';
+            }
         }
 
         let purchaseData = null;
         let currentPurchaseCat = 'all';
+        let purchaseDataLoaded = false;
 
         async function loadPurchaseData() {
+            if (purchaseDataLoaded && purchaseData) {
+                // 数据已加载，直接显示
+                renderPurchaseCategories();
+                renderPurchaseProducts('all');
+                return;
+            }
+            
+            // 显示加载中
+            document.getElementById('purchaseGrid').innerHTML = '<div style="color:#667eea; text-align:center; padding:40px;"><div class="loading-spinner"></div><p>正在加载采购数据...</p></div>';
+            
             try {
                 const res = await fetch('purchase_history.json?_t=' + Date.now());
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 purchaseData = await res.json();
+                purchaseDataLoaded = true;
                 document.getElementById('purchaseTotal').textContent = purchaseData.total || 0;
                 renderPurchaseCategories();
                 renderPurchaseProducts('all');
@@ -945,11 +1024,14 @@
             const panel = document.getElementById('purchasePanel');
             if (show) {
                 panel.style.display = 'block';
-                if (!purchaseData) loadPurchaseData();
+                // 延迟加载采购数据（首次点击时才加载）
+                if (!purchaseDataLoaded) {
+                    loadPurchaseData();
+                }
                 panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    } else {
-            panel.style.display = 'none';
-        }
+            } else {
+                panel.style.display = 'none';
+            }
         }
 
         function performSearch() {
