@@ -8,7 +8,7 @@
     <script>
     // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1302';
+        var v='20260627-1303';
         var lastV = localStorage.getItem('app_version');
         // 如果版本变化或没有版本记录，更新版本并跳转一次
         if(lastV !== v){
@@ -900,9 +900,6 @@ function checkLocalSync() {
             }
         };
         checkLocalSync();
-                });
-            });
-        }
 
         function getHeatLabel(heat) {
             const labels = ['', '', '\u4e00\u822c', '\u4e2d', '\u9ad8', '\u8d85\u9ad8'];
