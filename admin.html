@@ -746,12 +746,45 @@ const syncChannel = new BroadcastChannel('procurement_sync');
 
 // 保存数据到localStorage并通知首页刷新
 function saveAndSync(){
-    // 保存关键词数据（使用与首页相同的key）
-    const dataToSave = {
+    // 转换数据格式：添加缩写字段和热度字段
+    const transformedData = {
         ...keywordData,
+        categories: keywordData.categories.map(cat => ({
+            ...cat,
+            subcategories: cat.subcategories.map(sub => ({
+                ...sub,
+                keywords: sub.keywords.map(kw => {
+                    // 计算热度（从popularity）
+                    const popularity = kw.popularity || 0;
+                    let h = 2; // 默认一般
+                    if (popularity >= 90) h = 5;
+                    else if (popularity >= 70) h = 4;
+                    else if (popularity >= 30) h = 2;
+                    else h = 1;
+                    
+                    // 返回转换后的关键词（同时保留两种字段名）
+                    return {
+                        ...kw,
+                        // 缩写字段（首页使用）
+                        pw: kw.pw || kw.product_word,
+                        vw: kw.vw || kw.variant_words,
+                        aw: kw.aw || kw.attribute_words,
+                        sw: kw.sw || kw.scene_words,
+                        h: kw.h !== undefined ? kw.h : h,
+                        // 完整字段（后台使用）
+                        product_word: kw.product_word,
+                        variant_words: kw.variant_words,
+                        attribute_words: kw.attribute_words,
+                        scene_words: kw.scene_words
+                    };
+                })
+            }))
+        })),
         _savedAt: Date.now()
     };
-    localStorage.setItem('keyword_database_v2', JSON.stringify(dataToSave));
+    
+    // 保存关键词数据（使用与首页相同的key）
+    localStorage.setItem('keyword_database_v2', JSON.stringify(transformedData));
     // 保存采购记录
     localStorage.setItem('purchaseRecords', JSON.stringify(adminPurchaseRecords));
     // 保存业务心法
