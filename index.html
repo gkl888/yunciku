@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1155-LUCKYFIX -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1200-SORTFIX -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 强制缓存破坏 - Chrome特别处理
     (function(){
-        var v='20260627-1155';
+        var v='20260627-1200';
         if(!location.search.includes('v='+v)){
             location.replace(location.href.split('?')[0]+'?v='+v+'&_='+Date.now());
         }
@@ -738,7 +738,10 @@
                     console.log('[Sync] 已清除旧格式数据');
                 }
             } catch(e) {
-                console.error('[Sync] 同步失败:', e);
+                console.error('[Sync] 同步失败:', e.message, e.stack);
+                // 清除可能有问题的 localStorage 数据
+                localStorage.removeItem('keyword_database_v2');
+                console.log('[Sync] 已清除可能有问题的数据，使用内嵌数据');
             }
         }
         const syncChannel = new BroadcastChannel('procurement_sync');
@@ -962,7 +965,11 @@
             if (currentSort === 'heat') {
                 results.sort((a, b) => b.h - a.h);
             } else {
-                results.sort((a, b) => a.pw.zh.localeCompare(b.pw.zh, 'zh'));
+                results.sort((a, b) => {
+                    const aPw = a.pw?.zh || '';
+                    const bPw = b.pw?.zh || '';
+                    return aPw.localeCompare(bPw, 'zh');
+                });
             }
 
             renderKeywords(results);
