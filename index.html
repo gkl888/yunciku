@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1200-SORTFIX -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1205-LOGFIX -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 强制缓存破坏 - Chrome特别处理
     (function(){
-        var v='20260627-1200';
+        var v='20260627-1205';
         if(!location.search.includes('v='+v)){
             location.replace(location.href.split('?')[0]+'?v='+v+'&_='+Date.now());
         }
@@ -730,18 +730,16 @@
                     document.getElementById('statKws').textContent = allKeywords.length;
                     renderCategories();
                     performSearch();
-                    console.log('[Sync] 数据已从localStorage同步，关键词数:', allKeywords.length);
+                    console.log('[Sync] 已从本地存储同步数据，关键词数:', allKeywords.length);
                 } else if (parsed.categories && !isValidFormat) {
-                    console.log('[Sync] localStorage数据格式旧，跳过同步，使用内嵌数据');
+                    console.log('[Sync] 本地数据格式已过期，已清除并使用内置数据');
                     // 清除旧的localStorage数据
                     localStorage.removeItem('keyword_database_v2');
-                    console.log('[Sync] 已清除旧格式数据');
                 }
             } catch(e) {
-                console.error('[Sync] 同步失败:', e.message, e.stack);
-                // 清除可能有问题的 localStorage 数据
+                // 详细错误信息
+                console.warn('[Sync] localStorage 数据解析失败，已清除并使用内嵌数据。错误:', e.message);
                 localStorage.removeItem('keyword_database_v2');
-                console.log('[Sync] 已清除可能有问题的数据，使用内嵌数据');
             }
         }
         const syncChannel = new BroadcastChannel('procurement_sync');
