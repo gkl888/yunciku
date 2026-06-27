@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1205-LOGFIX -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1215-BATCHRENDER -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 强制缓存破坏 - Chrome特别处理
     (function(){
-        var v='20260627-1205';
+        var v='20260627-1215';
         if(!location.search.includes('v='+v)){
             location.replace(location.href.split('?')[0]+'?v='+v+'&_='+Date.now());
         }
@@ -688,12 +688,19 @@
             DATA.categories.forEach(cat => {
                 cat.subcategories.forEach(sub => {
                     sub.keywords.forEach(kw => {
-                        flat.push({
+                        // 兼容两种字段名格式：缩写(pw/vw/aw/sw) 和 完整(product_word/variant_words/attribute_words/scene_words)
+                        const normalizedKw = {
                             ...kw,
+                            // 如果没有缩写字段，使用完整字段名
+                            pw: kw.pw || kw.product_word,
+                            vw: kw.vw || kw.variant_words,
+                            aw: kw.aw || kw.attribute_words,
+                            sw: kw.sw || kw.scene_words,
                             category: cat.name,
                             categoryId: cat.id,
                             subcategory: sub.name
-                        });
+                        };
+                        flat.push(normalizedKw);
                     });
                 });
             });
@@ -708,7 +715,7 @@
             if (!saved) return;
             try {
                 const parsed = JSON.parse(saved);
-                // 验证数据格式：检查第一个关键词是否有 vw 字段（新格式）
+                // 验证数据格式：检查第一个关键词是否有必要字段（支持两种格式）
                 let isValidFormat = false;
                 if (parsed.categories && parsed.categories.length > 0) {
                     const firstCat = parsed.categories[0];
@@ -717,7 +724,10 @@
                         const firstSub = firstCat.subcategories[0];
                         if (firstSub.name && firstSub.name.zh && firstSub.keywords && firstSub.keywords.length > 0) {
                             const firstKw = firstSub.keywords[0];
-                            isValidFormat = firstKw && firstKw.vw !== undefined && firstKw.pw !== undefined;
+                            // 支持两种字段名格式
+                            const hasPw = firstKw && (firstKw.pw !== undefined || firstKw.product_word !== undefined);
+                            const hasVw = firstKw && (firstKw.vw !== undefined || firstKw.variant_words !== undefined);
+                            isValidFormat = hasPw && hasVw;
                         }
                     }
                 }
@@ -789,6 +799,10 @@
             return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
         }
 
+        let renderedCount = 0;
+        const BATCH_SIZE = 50; // 每批渲染50个
+        let currentKeywords = [];
+        
         function renderKeywords(keywords) {
             const grid = document.getElementById('resultsGrid');
             const info = document.getElementById('resultsInfo');
@@ -800,13 +814,44 @@
             }
 
             info.textContent = '找到 ' + keywords.length + ' 个关键词';
-
-            grid.innerHTML = keywords.map(kw => {
+            
+            // 重置分批渲染
+            currentKeywords = keywords;
+            renderedCount = 0;
+            grid.innerHTML = '';
+            
+            // 渲染第一批
+            renderBatch();
+            
+            // 添加滚动加载监听
+            window.removeEventListener('scroll', handleScroll);
+            if (keywords.length > BATCH_SIZE) {
+                window.addEventListener('scroll', handleScroll);
+            }
+        }
+        
+        function handleScroll() {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const windowHeight = window.innerHeight;
+            const docHeight = document.documentElement.scrollHeight;
+            
+            // 距离底部200px时加载更多
+            if (scrollTop + windowHeight >= docHeight - 200) {
+                renderBatch();
+            }
+        }
+        
+        function renderBatch() {
+            const grid = document.getElementById('resultsGrid');
+            const end = Math.min(renderedCount + BATCH_SIZE, currentKeywords.length);
+            
+            for (let i = renderedCount; i < end; i++) {
+                const kw = currentKeywords[i];
                 const words = currentLang === 'en' ? (kw.vw?.en || []) : (kw.vw?.zh || []);
                 const attrs = currentLang === 'en' ? (kw.aw?.en || []) : (kw.aw?.zh || []);
                 const scenes = currentLang === 'en' ? (kw.sw?.en || []) : (kw.sw?.zh || []);
-
-                return '<div class="keyword-card heat-' + kw.h + '">' +
+                
+                const cardHtml = '<div class="keyword-card heat-' + kw.h + '">' +
                     '<div class="keyword-header">' +
                         '<div class="keyword-title-group">' +
                             '<div class="keyword-title">' + escHtml(kw.pw?.zh || '') + '</div>' +
@@ -849,6 +894,12 @@
                         '<a href="https://www.made-in-china.com/products-search/hot-china-products/' + (kw.pw?.en || '').replace(/ /g, '_') + '.html" target="_blank" class="platform-btn platform-mic">Made-in-China</a>' +
                     '</div>' +
                 '</div>';
+                
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            }
+            
+            renderedCount = end;
+        }
             }).join('');
         }
 
