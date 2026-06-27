@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1135-CHROMEFIX -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1145-DATAFIX -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 强制缓存破坏 - Chrome特别处理
     (function(){
-        var v='20260627-1135';
+        var v='20260627-1145';
         if(!location.search.includes('v='+v)){
             location.replace(location.href.split('?')[0]+'?v='+v+'&_='+Date.now());
         }
@@ -708,8 +708,20 @@
             if (!saved) return;
             try {
                 const parsed = JSON.parse(saved);
+                // 验证数据格式：检查第一个关键词是否有 vw 字段（新格式）
+                let isValidFormat = false;
+                if (parsed.categories && parsed.categories.length > 0) {
+                    const firstCat = parsed.categories[0];
+                    if (firstCat.subcategories && firstCat.subcategories.length > 0) {
+                        const firstSub = firstCat.subcategories[0];
+                        if (firstSub.keywords && firstSub.keywords.length > 0) {
+                            const firstKw = firstSub.keywords[0];
+                            isValidFormat = firstKw && firstKw.vw !== undefined;
+                        }
+                    }
+                }
                 // 移除30分钟缓存过期限制，数据持久保存
-                if (parsed.categories) {
+                if (parsed.categories && isValidFormat) {
                     DATA = parsed;
                     allKeywords = flattenKeywords();
                     document.getElementById('statCats').textContent = DATA.categories.length;
@@ -718,6 +730,8 @@
                     renderCategories();
                     performSearch();
                     console.log('[Sync] 数据已从localStorage同步，关键词数:', allKeywords.length);
+                } else if (parsed.categories && !isValidFormat) {
+                    console.log('[Sync] localStorage数据格式旧，跳过同步，使用内嵌数据');
                 }
             } catch(e) {
                 console.error('[Sync] 同步失败:', e);
