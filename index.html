@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1145-DATAFIX -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1150-FULLFIX -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
     // 强制缓存破坏 - Chrome特别处理
     (function(){
-        var v='20260627-1145';
+        var v='20260627-1150';
         if(!location.search.includes('v='+v)){
             location.replace(location.href.split('?')[0]+'?v='+v+'&_='+Date.now());
         }
@@ -712,11 +712,12 @@
                 let isValidFormat = false;
                 if (parsed.categories && parsed.categories.length > 0) {
                     const firstCat = parsed.categories[0];
-                    if (firstCat.subcategories && firstCat.subcategories.length > 0) {
+                    // 同时检查 category.name 是否有 zh 字段
+                    if (firstCat.name && firstCat.name.zh && firstCat.subcategories && firstCat.subcategories.length > 0) {
                         const firstSub = firstCat.subcategories[0];
-                        if (firstSub.keywords && firstSub.keywords.length > 0) {
+                        if (firstSub.name && firstSub.name.zh && firstSub.keywords && firstSub.keywords.length > 0) {
                             const firstKw = firstSub.keywords[0];
-                            isValidFormat = firstKw && firstKw.vw !== undefined;
+                            isValidFormat = firstKw && firstKw.vw !== undefined && firstKw.pw !== undefined;
                         }
                     }
                 }
@@ -732,6 +733,9 @@
                     console.log('[Sync] 数据已从localStorage同步，关键词数:', allKeywords.length);
                 } else if (parsed.categories && !isValidFormat) {
                     console.log('[Sync] localStorage数据格式旧，跳过同步，使用内嵌数据');
+                    // 清除旧的localStorage数据
+                    localStorage.removeItem('keyword_database_v2');
+                    console.log('[Sync] 已清除旧格式数据');
                 }
             } catch(e) {
                 console.error('[Sync] 同步失败:', e);
