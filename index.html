@@ -8,7 +8,7 @@
     <script>
     // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1301';
+        var v='20260627-1302';
         var lastV = localStorage.getItem('app_version');
         // 如果版本变化或没有版本记录，更新版本并跳转一次
         if(lastV !== v){
@@ -824,7 +824,7 @@
                 // 从 data.json 加载
                 try {
                     console.log('[Init] 从 data.json 加载...');
-                    const res = await fetch('data.json?v=20260627');
+                    const res = await fetch('./data.json?v=20260627');
                     if (!res.ok) {
                         throw new Error('HTTP ' + res.status);
                     }
