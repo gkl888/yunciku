@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.6.2-FINAL-20260627-1245-PERF -->
+    <!-- 缓存版本: v2.6.2-FINAL-20260627-1246-DIRECT -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-    // 强制缓存破坏 - Chrome特别处理
+    // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
     (function(){
-        var v='20260627-1245';
-        if(!location.search.includes('v='+v)){
-            location.replace(location.href.split('?')[0]+'?v='+v+'&_='+Date.now());
+        var v='20260627-1246';
+        var lastV = localStorage.getItem('app_version');
+        // 如果版本变化或没有版本记录，更新版本并跳转一次
+        if(lastV !== v){
+            localStorage.setItem('app_version', v);
+            if(!location.search.includes('v='+v)){
+                location.replace(location.href.split('?')[0]+'?v='+v);
+            }
         }
     })();
     </script>
