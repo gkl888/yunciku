@@ -516,15 +516,22 @@ async function loadData() {
         }
     }
     
-    // 如果没有localStorage数据，从文件加载
+    // 如果没有localStorage数据，从data.json加载
     if (!keywordData.categories || keywordData.categories.length === 0) {
         try {
-            const resp = await fetch('keyword_database.json');
+            const resp = await fetch('data.json');
             keywordData = await resp.json();
         } catch(e) {
-            console.error('加载数据失败:', e);
-            alert('加载数据失败，请确保已启动本地服务器');
-            return;
+            console.error('加载data.json失败:', e);
+            // 尝试从keyword_database.json加载（兼容旧版本）
+            try {
+                const resp = await fetch('keyword_database.json');
+                keywordData = await resp.json();
+            } catch(e2) {
+                console.error('加载数据失败:', e2);
+                alert('加载数据失败，请检查网络连接');
+                return;
+            }
         }
     }
     
