@@ -477,6 +477,10 @@
 </div>
 
 <script>
+// ===== Cloudflare Worker 自动同步配置 =====
+const CF_WORKER_URL = '';   // 部署 Worker 后填这里，例如 https://yunciku-sync.yourname.workers.dev
+const CF_SYNC_TOKEN = '';  // 与 Worker SYNC_PASSWORD 一致（部署后告诉 QClaw 填这里）
+
 let keywordData = { categories: [] };
 let tips = [];
 let editingId = null;
@@ -795,6 +799,34 @@ function saveAndSync(){
     syncChannel.postMessage({ type: 'data_updated', timestamp: Date.now() });
     
     alert('✅ 数据已同步！首页刷新后即可看到最新内容');
+    const jsonStr = JSON.stringify(transformedData);
+    if (CF_WORKER_URL && CF_SYNC_TOKEN) { syncToGitHub(jsonStr); }
+}
+
+// 自动同步到 GitHub via Cloudflare Worker
+async function syncToGitHub(jsonStr) {
+    const btn = document.querySelector('[onclick="saveAndSync()"]') || document.querySelector('.btn-info');
+    const origText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '🔄 同步中...'; }
+    try {
+        const res = await fetch(CF_WORKER_URL, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + CF_SYNC_TOKEN, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: JSON.parse(jsonStr), message: 'sync: 关键词更新 via Cloudflare Worker' })
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert('✅ 已自动同步到 GitHub！SHA: ' + result.sha + '
+首页刷新后即可看到最新内容');
+        } else {
+            alert('⚠️ 本地已保存，云端同步失败：' + (result.error || JSON.stringify(result.detail)) + '
+请告诉 QClaw 检查');
+        }
+    } catch(e) {
+        alert('⚠️ 本地已保存，云端同步出错：' + e.message + '
+请告诉 QClaw 检查 Worker 配置');
+    }
+    if (btn) { btn.disabled = false; btn.textContent = origText || '💾 保存同步到首页'; }
 }
 
 // 导出当前数据为 data.json（让QClaw推送到GitHub）
@@ -810,7 +842,7 @@ function exportDataJson(){
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    alert('data.json 已下载。请把文件放到 采购词库 文件夹下，然后告诉 QClaw "推送 data.json" 即可同步到 GitHub。');
+    alert('data.json 已下载（备用方案）。\n\n如果已配置 Cloudflare Worker，保存时会自动同步，无需手动导出。\n\n手动同步：把文件放到 采购词库 文件夹，告诉 QClaw "推送 data.json"。');
 }
 
 // Tabs
