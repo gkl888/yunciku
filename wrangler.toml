@@ -1,0 +1,7 @@
+name = "yunciku-sync"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# 手动设置 secrets（不用写在代码里）:
+# 1. wrangler secret put GITHUB_TOKEN   → 填 GitHub Personal Access Token
+# 2. wrangler secret put SYNC_PASSWORD  → 填同步密码（和 admin.html 里的一致）
