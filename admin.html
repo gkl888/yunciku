@@ -538,9 +538,29 @@ async function loadData() {
     const savedTips = localStorage.getItem('businessTips');
     tips = savedTips ? JSON.parse(savedTips) : [...defaultTips];
     
+    // 标准化数据格式（兼容缩写格式 pw/vw/aw/sw）
+    normalizeKeywordData();
+    
     renderFilterCats();
     renderAll();
     renderTips();
+}
+
+// 标准化关键词数据，确保 product_word/variant_words/attribute_words/scene_words 字段存在
+function normalizeKeywordData() {
+    if (!keywordData.categories) return;
+    keywordData.categories.forEach(cat => {
+        if (!cat.subcategories) return;
+        cat.subcategories.forEach(sub => {
+            if (!sub.keywords) return;
+            sub.keywords.forEach(kw => {
+                kw.product_word = kw.product_word || kw.pw;
+                kw.variant_words = kw.variant_words || kw.vw;
+                kw.attribute_words = kw.attribute_words || kw.aw;
+                kw.scene_words = kw.scene_words || kw.sw;
+            });
+        });
+    });
 }
 
 function renderStats() {
@@ -783,11 +803,11 @@ function saveAndSync(){
                         aw: kw.aw || kw.attribute_words,
                         sw: kw.sw || kw.scene_words,
                         h: kw.h !== undefined ? kw.h : h,
-                        // 完整字段（后台使用）
-                        product_word: kw.product_word,
-                        variant_words: kw.variant_words,
-                        attribute_words: kw.attribute_words,
-                        scene_words: kw.scene_words
+                        // 完整字段（后台使用） - 兼容缩写格式
+                        product_word: kw.product_word || kw.pw,
+                        variant_words: kw.variant_words || kw.vw,
+                        attribute_words: kw.attribute_words || kw.aw,
+                        scene_words: kw.scene_words || kw.sw
                     };
                 })
             }))
