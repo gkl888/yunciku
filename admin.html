@@ -302,8 +302,8 @@
             <label><input type="checkbox" id="checkAll" onchange="toggleSelectAll()"> 全选</label>
             <button class="btn btn-warning" onclick="showBatchHeatModal()">🔥 批量改热度</button>
             <button class="btn btn-success" onclick="showAddModal()">新增关键词</button>
-            <button class="btn btn-info" onclick="saveAndSync()">💾 保存同步到首页</button>
-            <button class="btn btn-primary" onclick="exportDataJson()">📋 导出 data.json</button>
+            <button class="btn btn-info" onclick="saveAndSync()">💾 保存并下载同步包</button>
+            <button class="btn btn-primary" onclick="exportDataJson()">📋 备用导出 data.json</button>
         </div>
 
         <div id="categoriesContainer"></div>
@@ -825,9 +825,32 @@ function saveAndSync(){
     // 通知首页刷新
     syncChannel.postMessage({ type: 'data_updated', timestamp: Date.now() });
     
-    alert('✅ 数据已同步！首页刷新后即可看到最新内容');
     const jsonStr = JSON.stringify(transformedData);
-    if (CF_WORKER_URL && CF_SYNC_TOKEN) { syncToGitHub(jsonStr); }
+    if (CF_WORKER_URL && CF_SYNC_TOKEN) { 
+        syncToGitHub(jsonStr); 
+    } else {
+        // 未配置 Cloudflare Worker：下载 data.json，让用户告诉 QClaw 推送到云端
+        downloadDataJson(jsonStr);
+    }
+}
+
+// 下载 data.json 到本地（用于手动同步到云端）
+function downloadDataJson(jsonStr) {
+    try {
+        const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('✅ 本地已保存！\n\ndata.json 已下载到你的电脑。\n\n请告诉 QClaw "已下载"，我会自动推送到云端首页。');
+    } catch(e) {
+        alert('⚠️ 本地已保存，但下载 data.json 失败：' + e.message + '\n请告诉 QClaw 检查');
+    }
 }
 
 // 自动同步到 GitHub via Cloudflare Worker
