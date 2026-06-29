@@ -823,15 +823,12 @@ async function syncToGitHub(jsonStr) {
         });
         const result = await res.json();
         if (result.success) {
-            alert('✅ 已自动同步到 GitHub！SHA: ' + result.sha + '
-首页刷新后即可看到最新内容');
+            alert('✅ 已自动同步到 GitHub！SHA: ' + result.sha + '\n首页刷新后即可看到最新内容');
         } else {
-            alert('⚠️ 本地已保存，云端同步失败：' + (result.error || JSON.stringify(result.detail)) + '
-请告诉 QClaw 检查');
+            alert('⚠️ 本地已保存，云端同步失败：' + (result.error || JSON.stringify(result.detail)) + '\n请告诉 QClaw 检查');
         }
     } catch(e) {
-        alert('⚠️ 本地已保存，云端同步出错：' + e.message + '
-请告诉 QClaw 检查 Worker 配置');
+        alert('⚠️ 本地已保存，云端同步出错：' + e.message + '\n请告诉 QClaw 检查 Worker 配置');
     }
     if (btn) { btn.disabled = false; btn.textContent = origText || '💾 保存同步到首页'; }
 }
