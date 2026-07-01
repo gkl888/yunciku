@@ -3,9 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- v2026-07-01-1640 - 【根治】通过Pages Function实时拉取GitHub数据，绕开CF静态缓存 -->
     <title>采购词库后台管理</title>
+    <!-- v2026-06-29-1610 - 修复批量改热度：同时更新h和popularity -->
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* 骨架屏 - 极速加载占位 */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.2s infinite;
+            border-radius: 6px;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-header { height: 50px; margin-bottom: 16px; }
+        .skeleton-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+        .skeleton-card { height: 120px; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: #f5f7fa;
@@ -359,6 +376,13 @@
         <div style="background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
             <h3 style="margin-bottom:15px;color:#333;">👥 用户管理</h3>
             <p style="font-size:13px;color:#666;margin-bottom:15px;">管理所有注册用户，审核新用户注册申请</p>
+            <div style="margin-bottom:15px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="user-filter-btn active" data-filter="all" onclick="filterUsers('all',this)" style="padding:6px 14px;border:1px solid #d9d9d9;background:#1890ff;color:#fff;border-radius:6px;cursor:pointer;font-size:13px;">全部</button>
+                <button class="user-filter-btn" data-filter="pending" onclick="filterUsers('pending',this)" style="padding:6px 14px;border:1px solid #d9d9d9;background:#fff;color:#333;border-radius:6px;cursor:pointer;font-size:13px;">⏳ 待审核 <span id="pendingCountInline" style="background:#ff4d4f;color:#fff;border-radius:10px;padding:1px 8px;margin-left:4px;font-size:11px;">0</span></button>
+                <button class="user-filter-btn" data-filter="approved" onclick="filterUsers('approved',this)" style="padding:6px 14px;border:1px solid #d9d9d9;background:#fff;color:#333;border-radius:6px;cursor:pointer;font-size:13px;">✅ 已通过</button>
+                <button class="user-filter-btn" data-filter="rejected" onclick="filterUsers('rejected',this)" style="padding:6px 14px;border:1px solid #d9d9d9;background:#fff;color:#333;border-radius:6px;cursor:pointer;font-size:13px;">❌ 已拒绝</button>
+                <button class="user-filter-btn" data-filter="admin" onclick="filterUsers('admin',this)" style="padding:6px 14px;border:1px solid #d9d9d9;background:#fff;color:#333;border-radius:6px;cursor:pointer;font-size:13px;">🔧 管理员</button>
+            </div>
             <table class="user-table">
                 <thead>
                     <tr>
@@ -429,7 +453,7 @@
         <div class="form-row">
             <div class="form-group"><label>热度</label><select id="kwHeat">
                 <option value="1">📉 一般热度</option>
-                <option value="2">📊 中热度</option>
+                <option value="3">📊 中热度</option>
                 <option value="4">⚡ 高热度</option>
                 <option value="5">🔥 超高热度</option>
             </select></div>
@@ -449,7 +473,7 @@
         <p style="font-size:13px;color:#888;margin-bottom:16px;">已选中 <span id="batchCount">0</span> 个关键词</p>
         <div class="form-group"><label>选择热度</label><select id="batchHeatValue">
             <option value="1">📉 一般热度</option>
-            <option value="2">📊 中热度</option>
+            <option value="3">📊 中热度</option>
             <option value="4">⚡ 高热度</option>
             <option value="5">🔥 超高热度</option>
         </select></div>
@@ -477,9 +501,9 @@
 </div>
 
 <script>
-// ===== Cloudflare Worker 自动同步配置 =====
-const CF_WORKER_URL = '';   // 部署 Worker 后填这里，例如 https://yunciku-sync.yourname.workers.dev
-const CF_SYNC_TOKEN = '';  // 与 Worker SYNC_PASSWORD 一致（部署后告诉 QClaw 填这里）
+// ===== Cloudflare Pages Function 自动同步配置 =====
+const CF_WORKER_URL = 'https://main.yunciku.pages.dev/api/sync';
+const CF_SYNC_TOKEN = 'yunciku2026';
 
 let keywordData = { categories: [] };
 let tips = [];
@@ -494,8 +518,9 @@ const defaultTips = [
     {id:5,text:"供应商也是合作伙伴，建立长期信任关系",type:"采购谈判"}
 ];
 
-const heatLabels = {'':'','1':'📉 一般热度','2':'📊 中热度','4':'⚡ 高热度','5':'🔥 超高热度'};
-const popMap = {'1':10, '2':30, '4':70, '5':90};
+// 【统一】只用 1/3/4/5 四档（h=2 已迁到 h=3）
+const heatLabels = {'':'','1':'📉 一般热度','3':'📊 中热度','4':'⚡ 高热度','5':'🔥 超高热度'};
+const popMap = {'1':10, '3':30, '4':70, '5':90};
 
 // 确保DOM完全加载后才执行
 document.addEventListener('DOMContentLoaded', function() {
@@ -503,61 +528,97 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function loadData() {
-    // 优先从localStorage读取已保存的数据
+    // 【极速加载】阶段1：立即用本地缓存显示页面（秒开）
     const saved = localStorage.getItem('keyword_database_v2');
     if (saved) {
         try {
             const parsed = JSON.parse(saved);
-            if (parsed.categories) {
+            if (parsed.categories && parsed.categories.length > 0) {
                 keywordData = parsed;
+                console.log('[Load] 使用本地缓存，页面秒开');
             }
-        } catch(e) {
-            // localStorage数据损坏，继续从文件加载
-        }
+        } catch(e) { localStorage.removeItem('keyword_database_v2'); }
     }
     
-    // 如果没有localStorage数据，从data.json加载
-    if (!keywordData.categories || keywordData.categories.length === 0) {
-        try {
-            const resp = await fetch('data.json');
-            keywordData = await resp.json();
-        } catch(e) {
-            console.error('加载data.json失败:', e);
-            // 尝试从keyword_database.json加载（兼容旧版本）
+    // 有本地数据就立即渲染
+    if (keywordData.categories && keywordData.categories.length > 0) {
+        const savedTips = localStorage.getItem('businessTips');
+        tips = savedTips ? JSON.parse(savedTips) : [...defaultTips];
+        normalizeKeywordData();
+        renderFilterCats();
+        renderAll();
+        renderTips();
+    }
+    
+    // 【根治】阶段2：后台静默同步（通过 Pages Function 实时从GitHub拉取，绕开CF缓存）
+    try {
+        const resp = await fetch(CF_WORKER_URL, { cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        
+        const cloudData = await resp.json();
+        if (!cloudData.categories || cloudData.categories.length === 0) return;
+        
+        // 用 GitHub SHA 判断是否有更新
+        const cloudSha = resp.headers.get('X-SHA') || '';
+        const localSha = keywordData._sha || '';
+        
+        if (cloudSha && cloudSha !== localSha) {
+            keywordData = cloudData;
+            keywordData._sha = cloudSha;
+            localStorage.setItem('keyword_database_v2', JSON.stringify(cloudData));
+            normalizeKeywordData();
+            renderFilterCats();
+            renderAll();
+            console.log('[Sync] 已同步云端最新数据, SHA:', cloudSha);
+        } else {
+            console.log('[Sync] 本地无更新，跳过覆盖, SHA:', cloudSha, localSha);
+        }
+    } catch(e) {
+        console.warn('[Sync] 云端同步失败:', e.message);
+        if (!keywordData.categories || keywordData.categories.length === 0) {
             try {
-                const resp = await fetch('keyword_database.json');
-                keywordData = await resp.json();
+                const resp2 = await fetch('keyword_database.json');
+                if (resp2.ok) {
+                    keywordData = await resp2.json();
+                    localStorage.setItem('keyword_database_v2', JSON.stringify(keywordData));
+                    normalizeKeywordData();
+                    renderFilterCats();
+                    renderAll();
+                }
             } catch(e2) {
-                console.error('加载数据失败:', e2);
                 alert('加载数据失败，请检查网络连接');
-                return;
             }
         }
     }
-    
-    const savedTips = localStorage.getItem('businessTips');
-    tips = savedTips ? JSON.parse(savedTips) : [...defaultTips];
-    
-    // 标准化数据格式（兼容缩写格式 pw/vw/aw/sw）
-    normalizeKeywordData();
-    
-    renderFilterCats();
-    renderAll();
-    renderTips();
 }
 
-// 标准化关键词数据，确保 product_word/variant_words/attribute_words/scene_words 字段存在
+// 标准化关键词数据，确保所有字段存在
 function normalizeKeywordData() {
     if (!keywordData.categories) return;
+    const popMap = {'1':10, '3':30, '4':70, '5':90};
     keywordData.categories.forEach(cat => {
         if (!cat.subcategories) return;
         cat.subcategories.forEach(sub => {
             if (!sub.keywords) return;
             sub.keywords.forEach(kw => {
+                // 字段映射
                 kw.product_word = kw.product_word || kw.pw;
                 kw.variant_words = kw.variant_words || kw.vw;
                 kw.attribute_words = kw.attribute_words || kw.aw;
                 kw.scene_words = kw.scene_words || kw.sw;
+                
+                // 确保 h 和 popularity 互备
+                if (kw.h === undefined || kw.h === null) {
+                    // 从 popularity 计算 h
+                    if (kw.popularity >= 90) kw.h = 5;
+                    else if (kw.popularity >= 70) kw.h = 4;
+                    else if (kw.popularity >= 30) kw.h = 2;
+                    else kw.h = 1;
+                }
+                if (kw.popularity === undefined || kw.popularity === null) {
+                    // 从 h 计算 popularity
+                    kw.popularity = popMap[kw.h] || 30;
+                }
             });
         });
     });
@@ -598,11 +659,17 @@ function renderKwSubcats(catId) {
         : '';
 }
 
-function getHeat(v) {
-    if (v >= 90) return 5;
-    if (v >= 70) return 4;
-    if (v >= 30) return 2;
-    return 1;
+function getHeat(v, h) {
+    // 优先使用 h 字段（如果存在且有效）
+    if (h !== undefined && h !== null && h !== '') {
+        const hn = parseInt(h);
+        if (!isNaN(hn) && hn >= 1 && hn <= 5) return hn;
+    }
+    // 否则根据 popularity 计算
+    if (v >= 90) return 5;      // 超高
+    if (v >= 70) return 4;      // 高
+    if (v >= 30) return 2;      // 中（注意不是3！）
+    return 1;                    // 一般
 }
 
 function renderAll() {
@@ -616,6 +683,18 @@ function renderAll() {
         console.error('categoriesContainer not found');
         return;
     }
+    
+    // 骨架屏模式 - 无数据时显示占位
+    if (!keywordData.categories || keywordData.categories.length === 0) {
+        container.innerHTML = `
+            <div class="skeleton skeleton-header"></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;">
+                ${'<div class="skeleton" style="height:120px;"></div>'.repeat(6)}
+            </div>
+        `;
+        return;
+    }
+    
     let html = '';
 
     keywordData.categories.forEach(cat => {
@@ -631,7 +710,7 @@ function renderAll() {
             });
             
             kws.forEach(kw => {
-                const h = getHeat(kw.popularity);
+                const h = getHeat(kw.popularity, kw.h);
                 const checked = selectedIds.has(kw.id) ? 'checked' : '';
                 const cardClass = selectedIds.has(kw.id) ? 'kw-checked' : '';
                 catHtml += `
@@ -640,7 +719,7 @@ function renderAll() {
                         <div><input type="checkbox" class="kw-check" ${checked} onchange="toggleSelect('${kw.id}')">
                         <span class="kw-name">${kw.product_word.zh}</span>
                         <div class="kw-name-en">${kw.product_word.en||''}</div></div>
-                        <span class="heat-badge heat-${h}">${heatLabels[h]}</span>
+                        <span class="heat-badge heat-${h}">${heatLabels[h+''] || '🔥 一般'}</span>
                     </div>
                     <div class="kw-meta">
                         <span class="tag">${sub.name.zh}</span>
@@ -700,12 +779,21 @@ function showBatchHeatModal() {
 function closeBatchModal(){document.getElementById('batchHeatModal').classList.remove('active');}
 function applyBatchHeat(){
     const val = parseInt(document.getElementById('batchHeatValue').value);
+    if (isNaN(val) || !popMap[val]) { alert('无效的热度值'); return; }
+    let count = 0;
     keywordData.categories.forEach(cat=>cat.subcategories.forEach(sub=>sub.keywords.forEach(kw=>{
-        if(selectedIds.has(kw.id)){kw.popularity=popMap[val];}
+        if(selectedIds.has(kw.id)){
+            kw.h = val;                    // 【修复】同时更新 h 字段
+            kw.popularity = popMap[val];   // 同时更新 popularity
+            count++;
+        }
     })));
     closeBatchModal();
-    saveAndSync();
-    renderAll();
+    if (count > 0) {
+        saveAndSync();
+        renderAll();
+        showToast2(`✅ 已批量修改 ${count} 个关键词的热度`);
+    }
 }
 
 // CRUD
@@ -733,7 +821,7 @@ function editKeyword(id){
     document.getElementById('kwAttrEn').value=(aw.en||[]).join(',');
     document.getElementById('kwSceneZh').value=(sw.zh||[]).join(',');
     document.getElementById('kwSceneEn').value=(sw.en||[]).join(',');
-    document.getElementById('kwHeat').value=getHeat(found.kw.popularity)+'';
+    document.getElementById('kwHeat').value=getHeat(found.kw.popularity, found.kw.h)+'';
     document.getElementById('kwNotes').value=found.kw.notes||'';
     document.getElementById('kwCategory').value=found.cat.id;
     renderKwSubcats(found.cat.id);
@@ -752,7 +840,7 @@ function saveKeyword(){
         attribute_words:{zh:document.getElementById('kwAttrZh').value.split(',').map(s=>s.trim()).filter(s=>s),en:document.getElementById('kwAttrEn').value.split(',').map(s=>s.trim()).filter(s=>s)},
         scene_words:{zh:document.getElementById('kwSceneZh').value.split(',').map(s=>s.trim()).filter(s=>s),en:document.getElementById('kwSceneEn').value.split(',').map(s=>s.trim()).filter(s=>s)},
         popularity:popMap[heat],
-        notes:document.getElementById('kwNotes').value.trim()
+        h: heat  // 直接保存热度档位（1/2/4/5）
     };
     if(editingId){
         keywordData.categories.forEach(cat=>cat.subcategories.forEach(sub=>{
@@ -786,13 +874,26 @@ function saveAndSync(){
             subcategories: cat.subcategories.map(sub => ({
                 ...sub,
                 keywords: sub.keywords.map(kw => {
-                    // 计算热度（从popularity）
-                    const popularity = kw.popularity || 0;
-                    let h = 2; // 默认一般
-                    if (popularity >= 90) h = 5;
-                    else if (popularity >= 70) h = 4;
-                    else if (popularity >= 30) h = 3;
-                    else h = 2;
+                    // 确保 h 和 popularity 都有值
+                    let h = kw.h;
+                    let popularity = kw.popularity;
+                    
+                    // 【数据迁移】h=2 → h=3（避免重复中热度）
+                    if (h === 2) h = 3;
+                    
+                    // 如果 h 不存在，从 popularity 计算
+                    if (h === undefined || h === null) {
+                        if (popularity >= 90) h = 5;
+                        else if (popularity >= 70) h = 4;
+                        else if (popularity >= 30) h = 3;
+                        else h = 1;
+                    }
+                    
+                    // 如果 popularity 不存在，从 h 反推
+                    if (popularity === undefined || popularity === null) {
+                        const popMap = {'1':10, '3':30, '4':70, '5':90};
+                        popularity = popMap[h] || 30;
+                    }
                     
                     // 返回转换后的关键词（同时保留两种字段名）
                     return {
@@ -802,7 +903,8 @@ function saveAndSync(){
                         vw: kw.vw || kw.variant_words,
                         aw: kw.aw || kw.attribute_words,
                         sw: kw.sw || kw.scene_words,
-                        h: kw.h !== undefined ? kw.h : h,
+                        h: h,
+                        popularity: popularity,
                         // 完整字段（后台使用） - 兼容缩写格式
                         product_word: kw.product_word || kw.pw,
                         variant_words: kw.variant_words || kw.vw,
@@ -816,7 +918,10 @@ function saveAndSync(){
     };
     
     // 保存关键词数据（使用与首页相同的key）
+    transformedData._localVersion = Date.now(); // 【根治】标记本地修改时间，防止被云端旧数据覆盖
     localStorage.setItem('keyword_database_v2', JSON.stringify(transformedData));
+    // 【根治】更新首页缓存版本号，让首页下次打开/刷新时强制从 data.json 拉新
+    localStorage.setItem('data_version', Date.now() + '');
     // 保存采购记录
     localStorage.setItem('purchaseRecords', JSON.stringify(adminPurchaseRecords));
     // 保存业务心法
@@ -1093,10 +1198,45 @@ setTimeout(loadAdminPurchaseRecords, 500);
 const USERS_KEY = 'procurement_users';
 const LOGS_KEY = 'procurement_logs';
 
-// 加载用户列表
-function loadUsers() {
+// 加载用户列表（优先从云端获取，失败则用本地）
+async function loadUsersFromCloud() {
+    try {
+        const resp = await fetch(CF_WORKER_URL + '?type=users', {
+            headers: { 'Authorization': 'Bearer ' + CF_SYNC_TOKEN }
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.users) {
+                const cloudUsers = data.users;
+                if (!cloudUsers['admin']) {
+                    cloudUsers['admin'] = {
+                        username: 'admin',
+                        realname: '管理员',
+                        password: hashPassword('admin123'),
+                        createdAt: 1740000000000,
+                        isAdmin: true,
+                        status: 'approved'
+                    };
+                }
+                // 合并到本地（云端为主）
+                const localUsers = loadUsersLocal();
+                Object.keys(cloudUsers).forEach(k => { localUsers[k] = cloudUsers[k]; });
+                localStorage.setItem(USERS_KEY, JSON.stringify(localUsers));
+                return localUsers;
+            }
+        }
+    } catch(e) { console.error('获取云端用户失败:', e); }
+    return loadUsersLocal();
+}
+
+function loadUsersLocal() {
     const users = localStorage.getItem(USERS_KEY);
     return users ? JSON.parse(users) : initDefaultAdmin();
+}
+
+// 保存用户到本地
+function saveUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
 // 初始化默认管理员
@@ -1115,9 +1255,18 @@ function initDefaultAdmin() {
     return defaultUsers;
 }
 
-// 保存用户列表
-function saveUsers(users) {
+// 保存用户列表（本地 + 云端）
+async function saveUsersAndSync(users) {
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    // 同步到云端
+    try {
+        const resp = await fetch(CF_WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CF_SYNC_TOKEN },
+            body: JSON.stringify({ usersData: users, message: 'user_update' })
+        });
+        if (!resp.ok) console.error('用户同步云端失败');
+    } catch(e) { console.error('用户同步失败:', e); }
 }
 
 // 获取客户端IP（模拟）
@@ -1147,105 +1296,155 @@ async function addLog(type, username, detail) {
     localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
 }
 
-// 渲染用户表格
-function renderUsersTable() {
-    const users = loadUsers();
+// 渲染用户表格（从云端加载数据）
+// 用户筛选状态
+let currentUserFilter = 'all';
+
+function filterUsers(filter, btn) {
+    currentUserFilter = filter;
+    document.querySelectorAll('.user-filter-btn').forEach(b => {
+        b.classList.remove('active');
+        b.style.background = '#fff';
+        b.style.color = '#333';
+    });
+    if (btn) {
+        btn.classList.add('active');
+        btn.style.background = '#1890ff';
+        btn.style.color = '#fff';
+    }
+    renderUsersTable();
+}
+
+async function renderUsersTable() {
+    const users = await loadUsersFromCloud();
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
 
-    let pendingCount = 0;
+    // 统计各状态
+    let pendingCount = 0, approvedCount = 0, rejectedCount = 0, adminCount = 0;
+    Object.values(users).forEach(u => {
+        if (u.isAdmin) adminCount++;
+        else if (u.status === 'pending') pendingCount++;
+        else if (u.status === 'approved') approvedCount++;
+        else if (u.status === 'rejected') rejectedCount++;
+    });
+
+    // 筛选 + 排序（待审核置顶）
+    let list = Object.values(users);
+    if (currentUserFilter === 'pending') list = list.filter(u => !u.isAdmin && u.status === 'pending');
+    else if (currentUserFilter === 'approved') list = list.filter(u => !u.isAdmin && u.status === 'approved');
+    else if (currentUserFilter === 'rejected') list = list.filter(u => !u.isAdmin && u.status === 'rejected');
+    else if (currentUserFilter === 'admin') list = list.filter(u => u.isAdmin);
+
+    // 排序：待审核 > 已通过 > 管理员 > 已拒绝，同状态按注册时间倒序
+    list.sort((a, b) => {
+        const order = { pending: 0, approved: 1, admin: 2, rejected: 3 };
+        const aOrder = a.isAdmin ? 2 : (order[a.status] ?? 4);
+        const bOrder = b.isAdmin ? 2 : (order[b.status] ?? 4);
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
     let html = '';
-
-    Object.values(users).forEach(user => {
-        if (user.status === 'pending') pendingCount++;
-
-        const statusClass = user.isAdmin ? 'status-admin' : 
+    list.forEach(user => {
+        const statusClass = user.isAdmin ? 'status-admin' :
                            user.status === 'approved' ? 'status-approved' :
                            user.status === 'rejected' ? 'status-rejected' : 'status-pending';
         const statusText = user.isAdmin ? '管理员' :
                           user.status === 'approved' ? '已通过' :
                           user.status === 'rejected' ? '已拒绝' : '待审核';
 
-        const createTime = new Date(user.createdAt).toLocaleString('zh-CN');
+        const createTime = user.createdAt ? new Date(user.createdAt).toLocaleString('zh-CN') : '-';
 
-        html += `<tr>
-            <td><strong>${escapeHtml2(user.realname || user.username)}</strong></td>
+        // 待审核行高亮
+        const rowStyle = (!user.isAdmin && user.status === 'pending') ? 'background:#fffbe6;' : '';
+
+        html += `<tr style="${rowStyle}">
+            <td><strong>${escapeHtml2(user.realname || user.username)}</strong>${(!user.isAdmin && user.status === 'pending') ? ' <span style="background:#ff4d4f;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;">新</span>' : ''}</td>
             <td>${escapeHtml2(user.username)}</td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
             <td>${createTime}</td>
             <td>
-                ${!user.isAdmin ? `
-                    ${user.status === 'pending' ? `
-                        <button class="btn btn-success" onclick="approveUser('${user.username}')" style="padding:4px 10px;font-size:12px;">通过</button>
-                        <button class="btn btn-warning" onclick="rejectUser('${user.username}')" style="padding:4px 10px;font-size:12px;">拒绝</button>
-                    ` : ''}
-                    <button class="btn btn-info" onclick="changePassword('${user.username}')" style="padding:4px 10px;font-size:12px;">🔑 改密</button>
-                    <button class="btn" style="padding:4px 10px;font-size:12px;background:#ff4d4f;color:#fff;" onclick="deleteUser('${user.username}')">🗑 删除</button>
-                ` : '<span style="color:#999;font-size:12px;">系统账号</span>'}
+                ${user.status === 'pending' && !user.isAdmin ? `
+                    <button class="btn btn-success" onclick="approveUser('${user.username}')" style="padding:4px 10px;font-size:12px;">通过</button>
+                    <button class="btn btn-warning" onclick="rejectUser('${user.username}')" style="padding:4px 10px;font-size:12px;">拒绝</button>
+                ` : ''}
+                <button class="btn btn-info" onclick="changePassword('${user.username}')" style="padding:4px 10px;font-size:12px;">🔑 改密</button>
+                ${!user.isAdmin ? `<button class="btn" style="padding:4px 10px;font-size:12px;background:#ff4d4f;color:#fff;" onclick="deleteUser('${user.username}')">🗑 删除</button>` : ''}
             </td>
         </tr>`;
     });
 
-    tbody.innerHTML = html;
+    tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;color:#999;padding:40px;">${currentUserFilter === 'pending' ? '🎉 暂无待审核用户' : '暂无用户数据'}</td></tr>`;
+
+    // 更新标签数字
     const badge = document.getElementById('userBadge');
     if (badge) badge.textContent = pendingCount;
+    const pendingInline = document.getElementById('pendingCountInline');
+    if (pendingInline) pendingInline.textContent = pendingCount;
 }
 
 // 审核通过用户
 async function approveUser(username) {
-    const users = loadUsers();
+    const users = loadUsersLocal();
     if (users[username]) {
         users[username].status = 'approved';
-        saveUsers(users);
+        await saveUsersAndSync(users);
         await addLog('approve', username, '管理员审核通过用户注册');
         renderUsersTable();
-        alert(`用户 ${username} 已审核通过！`);
+        showToast2(`✅ 用户 ${username} 已审核通过！`);
     }
 }
 
 // 拒绝用户
 async function rejectUser(username) {
     if (!confirm(`确定要拒绝用户 ${username} 的注册申请吗？`)) return;
-    const users = loadUsers();
+    const users = loadUsersLocal();
     if (users[username]) {
         users[username].status = 'rejected';
-        saveUsers(users);
+        await saveUsersAndSync(users);
         await addLog('reject', username, '管理员拒绝用户注册');
         renderUsersTable();
+        showToast2(`用户 ${username} 已拒绝`);
     }
 }
 
 // 删除用户
 async function deleteUser(username) {
     if (!confirm(`确定要删除用户 ${username} 吗？此操作不可恢复！`)) return;
-    const users = loadUsers();
+    const users = loadUsersLocal();
     if (users[username]) {
         delete users[username];
-        saveUsers(users);
+        await saveUsersAndSync(users);
         await addLog('delete', username, '管理员删除用户');
         renderUsersTable();
+        showToast2(`用户 ${username} 已删除`);
     }
 }
 
 // 修改用户密码
-function changePassword(username) {
-    const users = loadUsers();
-    if (!users[username]) return;
-    
+async function changePassword(username) {
     const newPassword = prompt(`为用户 ${username} 设置新密码：\n（至少6位字符）`);
     if (!newPassword) return;
+    if (newPassword.length < 6) { alert('密码至少需要6位字符！'); return; }
+    if (!confirm(`确认将用户 ${username} 的密码修改为新密码？\n\n改密后原密码将立即失效。`)) return;
     
-    if (newPassword.length < 6) {
-        alert('密码至少需要6位字符！');
-        return;
-    }
-    
-    if (!confirm(`确认将用户 ${username} 的密码修改为新密码？`)) return;
-    
+    const users = loadUsersLocal();
+    if (!users[username]) return;
     users[username].password = hashPassword(newPassword);
-    saveUsers(users);
-    addLog('password', username, '管理员修改用户密码');
-    alert(`用户 ${username} 的密码已修改成功！`);
+    await saveUsersAndSync(users);
+    addLog('password', username, `管理员修改用户密码`);
+    showToast2(`✅ 用户 ${username} 的密码已修改，原密码已失效！`);
+    
+    // 如果被改密的就是当前在线用户，强制踢下线
+    try {
+        const current = JSON.parse(localStorage.getItem('procurement_current_user') || '{}');
+        if (current && current.username === username) {
+            alert('您的密码已被修改，请使用新密码重新登录！');
+            localStorage.removeItem('procurement_current_user');
+            window.location.href = 'login.html';
+        }
+    } catch(e) {}
 }
 
 // 密码哈希函数
@@ -1316,7 +1515,48 @@ function checkAdminAuth() {
         window.location.href = 'login.html';
         return false;
     }
+    // 检查是否为管理员账号
+    const users = loadUsersLocal();
+    const isAdmin = user.username === 'admin' || (users[user.username] && users[user.username].isAdmin);
+    if (!isAdmin) {
+        alert('您没有权限访问后台管理系统');
+        window.location.href = 'index.html';
+        return false;
+    }
     return true;
+}
+
+// 修改当前管理员的密码
+async function changeMyPassword() {
+    const currentUser = JSON.parse(localStorage.getItem(CURRENT_USER_KEY) || '{}');
+    const username = currentUser.username || 'admin';
+    
+    const newPwd = document.getElementById('myNewPassword').value;
+    const confirmPwd = document.getElementById('myConfirmPassword').value;
+    const msgEl = document.getElementById('myPwdMsg');
+    
+    if (!newPwd || newPwd.length < 6) {
+        msgEl.textContent = '❌ 新密码至少需要6位字符';
+        msgEl.style.color = '#ef4444';
+        return;
+    }
+    
+    if (newPwd !== confirmPwd) {
+        msgEl.textContent = '❌ 两次输入的密码不一致';
+        msgEl.style.color = '#ef4444';
+        return;
+    }
+    
+    const users = loadUsersLocal();
+    users[username].password = hashPassword(newPwd);
+    await saveUsersAndSync(users);
+    
+    document.getElementById('myNewPassword').value = '';
+    document.getElementById('myConfirmPassword').value = '';
+    
+    msgEl.textContent = '✅ 密码修改成功！请记住新密码。';
+    msgEl.style.color = '#10b981';
+    addLog('password', username, '管理员修改了自己的密码');
 }
 
 function goToIndex() {
@@ -1329,17 +1569,22 @@ function adminLogout() {
 }
 
 // 页面加载时检查权限
-checkAdminAuth();
+const _authOk = // 延迟检查权限，让页面先渲染
+    setTimeout(checkAdminAuth, 100);
 
 // 显示用户信息
 (function() {
+    if (!_authOk) return; // 权限检查失败，停止
     const userJson = localStorage.getItem('procurement_current_user');
     if (userJson) {
         const user = JSON.parse(userJson);
         const infoEl = document.getElementById('adminUserInfo');
         if (infoEl) {
-            infoEl.textContent = '当前用户: ' + (user.nickname || user.username);
+            infoEl.textContent = '当前用户: ' + (user.nickname || user.username) + (user.username === 'admin' ? ' (管理员)' : '');
         }
+    } else {
+        const infoEl = document.getElementById('adminUserInfo');
+        if (infoEl) infoEl.textContent = '已登录';
     }
 })();
 </script>
