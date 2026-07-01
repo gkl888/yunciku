@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <!-- 缓存版本: v2.7.9-LAYOUT4-20260627 -->
+    <!-- v2026-07-01-1100 - 终极根治：通过Worker实时拉GitHub data.json，绕开CF静态缓存 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-    // 缓存破坏 - 只在检测到旧版本时跳转（通过localStorage记录版本）
+    // 智能缓存策略：首次加载后缓存，检测到后台更新时才刷新
     (function(){
-        var v='20260627-1630';
-        var lastV = localStorage.getItem('app_version');
-        // 如果版本变化或没有版本记录，更新版本并跳转一次
-        if(lastV !== v){
-            localStorage.setItem('app_version', v);
-            if(!location.search.includes('v='+v)){
-                location.replace(location.href.split('?')[0]+'?v='+v);
-            }
+        // 检查是否有后台更新标记
+        const lastVersion = localStorage.getItem('data_version') || '0';
+        const currentVersion = localStorage.getItem('app_data_timestamp') || '0';
+        // 如果版本号变化超过5秒，说明有更新，清除缓存强制刷新
+        if (parseInt(lastVersion) - parseInt(currentVersion) > 5000) {
+            localStorage.removeItem('keyword_database_v2');
         }
     })();
     </script>
@@ -37,20 +35,14 @@
         .stats { display: flex; justify-content: center; gap: 30px; margin-top: 15px; }
         .stat-item { background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 20px; backdrop-filter: blur(10px); }
 
-        /* 加载动画 */
+        /* 加载动画 - 优化为最小化 */
         .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.2s;
         }
+        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
         .loading-spinner {
             text-align: center;
@@ -666,7 +658,7 @@
                 <div class="legend-item"><div class="heat-dot heat-dot-5"></div>🔥 超高热度</div>
                 <div class="legend-item"><div class="heat-dot heat-dot-4"></div>⚡ 高热度</div>
                 <div class="legend-item"><div class="heat-dot heat-dot-3"></div>📊 中热度</div>
-                <div class="legend-item"><div class="heat-dot heat-dot-2"></div>📉 一般热度</div>
+                <div class="legend-item"><div class="heat-dot heat-dot-1"></div>📉 一般热度</div>
             </div>
         </header>
 
@@ -684,7 +676,7 @@
                 <button class="filter-tag" data-filter="5">🔥 超高热度</button>
                 <button class="filter-tag" data-filter="4">⚡ 高热度</button>
                 <button class="filter-tag" data-filter="3">📊 中热度</button>
-                <button class="filter-tag" data-filter="2">📉 一般热度</button>
+                <button class="filter-tag" data-filter="1">📉 一般热度</button>
                 <button class="filter-tag" id="btnPurchaseHistory" data-filter="purchase" style="background: linear-gradient(135deg, #7cb342 0%, #558b2f 100%); color: white; border: none; margin-left: 8px; box-shadow: 0 2px 6px rgba(124,179,66,0.3);">📦 近一年采购</button>
                 <div class="sort-options">
                     <span class="filter-label">排序:</span>
@@ -816,7 +808,8 @@
                 // 从 data.json 加载
                 try {
                     console.log('[Init] 从 data.json 加载...');
-                    const res = await fetch('./data.json?v=20260627-1600');
+                    // 【根治】从 Worker 拉数据，Worker 实时从 GitHub 拉，绕过 CF Pages 静态缓存
+                    const res = await fetch('https://main.yunciku.pages.dev/api/data?t=' + Date.now());
                     if (!res.ok) {
                         throw new Error('HTTP ' + res.status);
                     }
@@ -895,60 +888,77 @@
         
         // BroadcastChannel 实时同步
         
-function checkLocalSync() {
-            const saved = localStorage.getItem('keyword_database_v2');
-            if (!saved) return;
+        // 【根治】通过 Pages Function 实时从GitHub拉取数据
+        const CF_WORKER_URL = '/api/sync';
+
+        async function checkLocalSync() {
+            // 【极速加载】优先使用预加载的缓存数据
+            if (window.__CACHED_DATA__) {
+                DATA = window.__CACHED_DATA__;
+                allKeywords = flattenKeywords();
+                document.getElementById('statCats').textContent = DATA.categories.length;
+                document.getElementById('statSubs').textContent = DATA.categories.reduce((s,c) => s + c.subcategories.length, 0);
+                document.getElementById('statKws').textContent = allKeywords.length;
+                renderCategories();
+                performSearch();
+                hideLoading();
+                console.log('[Sync] 使用预加载缓存，秒开');
+                // 后台静默检查更新
+                checkForUpdates();
+                return;
+            }
+            
+            // 无缓存时从云端拉取（通过API实时获取）
             try {
-                const parsed = JSON.parse(saved);
-                // 验证数据格式：检查第一个关键词是否有必要字段（支持两种格式）
-                let isValidFormat = false;
-                if (parsed.categories && parsed.categories.length > 0) {
-                    const firstCat = parsed.categories[0];
-                    // 同时检查 category.name 是否有 zh 字段
-                    if (firstCat.name && firstCat.name.zh && firstCat.subcategories && firstCat.subcategories.length > 0) {
-                        const firstSub = firstCat.subcategories[0];
-                        if (firstSub.name && firstSub.name.zh && firstSub.keywords && firstSub.keywords.length > 0) {
-                            const firstKw = firstSub.keywords[0];
-                            // 支持两种字段名格式
-                            const hasPw = firstKw && (firstKw.pw !== undefined || firstKw.product_word !== undefined);
-                            const hasVw = firstKw && (firstKw.vw !== undefined || firstKw.variant_words !== undefined);
-                            isValidFormat = hasPw && hasVw;
-                        }
-                    }
-                }
-                // 移除30分钟缓存过期限制，数据持久保存
-                if (parsed.categories && isValidFormat) {
-                    DATA = parsed;
-                    allKeywords = flattenKeywords();
-                    document.getElementById('statCats').textContent = DATA.categories.length;
-                    document.getElementById('statSubs').textContent = DATA.categories.reduce((s,c) => s + c.subcategories.length, 0);
-                    document.getElementById('statKws').textContent = allKeywords.length;
-                    renderCategories();
-                    performSearch();
-                    console.log('[Sync] 已从本地存储同步数据，关键词数:', allKeywords.length);
-                } else if (parsed.categories && !isValidFormat) {
-                    console.log('[Sync] 本地数据格式已过期，已清除并使用内置数据');
-                    // 清除旧的localStorage数据
-                    localStorage.removeItem('keyword_database_v2');
+                const resp = await fetch(CF_WORKER_URL);
+                if (resp.ok) {
+                    DATA = await resp.json();
+                    DATA._sha = resp.headers.get('X-SHA') || '';
+                    localStorage.setItem('keyword_database_v2', JSON.stringify(DATA));
                 }
             } catch(e) {
-                // 详细错误信息
-                console.warn('[Sync] localStorage 数据解析失败，已清除并使用内嵌数据。错误:', e.message);
-                localStorage.removeItem('keyword_database_v2');
+                console.error('加载失败:', e);
             }
+            allKeywords = flattenKeywords();
+            document.getElementById('statCats').textContent = DATA.categories.length;
+            document.getElementById('statSubs').textContent = DATA.categories.reduce((s,c) => s + c.subcategories.length, 0);
+            document.getElementById('statKws').textContent = allKeywords.length;
+            renderCategories();
+            performSearch();
+            hideLoading();
         }
-        const syncChannel = new BroadcastChannel('procurement_sync');
-        syncChannel.onmessage = (e) => {
-            if (e.data && e.data.type === 'data_updated') {
-                checkLocalSync();
-            }
-        };
+        
+        // 后台检查更新（通过API实时获取，用SHA判断）
+        async function checkForUpdates() {
+            try {
+                const resp = await fetch(CF_WORKER_URL);
+                if (!resp.ok) return;
+                const newData = await resp.json();
+                const newSha = resp.headers.get('X-SHA') || '';
+                const localSha = DATA._sha || '';
+                if (newSha && newSha !== localSha) {
+                    // 有更新，静默刷新
+                    DATA = newData;
+                    DATA._sha = newSha;
+                    localStorage.setItem('keyword_database_v2', JSON.stringify(DATA));
+                    allKeywords = flattenKeywords();
+                    renderCategories();
+                    performSearch();
+                    console.log('[Sync] 后台更新完成, SHA:', newSha);
+                }
+            } catch(e) {}
+        }
         checkLocalSync();
+        
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
 
         function getHeatLabel(heat) {
-            const labels = ['', '', '\u4e00\u822c', '\u4e2d', '\u9ad8', '\u8d85\u9ad8'];
-            const icons = ['', '', '\ud83d\udcc9', '\ud83d\udcca', '\u26a1', '\ud83d\udd25'];
-            return icons[heat] + ' ' + labels[heat];
+            const labels = ['', '\u4e00\u822c', '', '\u4e2d', '\u9ad8', '\u8d85\u9ad8'];
+            const icons = ['', '\ud83d\udcc9', '', '\ud83d\udcca', '\u26a1', '\ud83d\udd25'];
+            return (icons[heat] || '') + ' ' + (labels[heat] || '');
         }
 
         function escHtml(str) {
